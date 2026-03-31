@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DB_HOST=172.25.144.1
+      - DB_PORT=3306
+      - DB_USERNAME=gx
+      - DB_PASSWORD=NuntiusGX2019!
+      - DB_DATABASE=nuntius
+      - JWT_SECRET=wallet-jwt-secret-change-in-production
+      - JWT_EXPIRES_IN=60m
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

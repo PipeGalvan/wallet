@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete, Body, Param,
+  Controller, Get, Post, Put, Delete, Body, Param, Query,
   ParseIntPipe, UseGuards,
 } from '@nestjs/common';
 import { CatalogosService } from './catalogos.service';
@@ -14,8 +14,8 @@ export class TiposIngresoController {
   constructor(private catalogosService: CatalogosService) {}
 
   @Get()
-  findAll(@TenantId() tenantId: number) {
-    return this.catalogosService.findTiposIngreso(tenantId);
+  findAll(@TenantId() tenantId: number, @Query('all') all?: string) {
+    return this.catalogosService.findTiposIngreso(tenantId, all === 'true');
   }
 
   @Post()

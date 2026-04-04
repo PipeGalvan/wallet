@@ -24,9 +24,11 @@ export class CajasService {
     private monedaRepo: Repository<Moneda>,
   ) {}
 
-  async findAll(tenantId: number) {
+  async findAll(tenantId: number, activoOnly = false) {
+    const where: any = { propietarioId: tenantId };
+    if (activoOnly) where.activo = true;
     const cajas = await this.cajaRepo.find({
-      where: { propietarioId: tenantId },
+      where,
       order: { id: 'ASC' },
     });
 

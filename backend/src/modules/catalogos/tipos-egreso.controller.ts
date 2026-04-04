@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Put, Delete, Body, Param,
-  ParseIntPipe, UseGuards,
+  ParseIntPipe, UseGuards, Query,
 } from '@nestjs/common';
 import { CatalogosService } from './catalogos.service';
 import { CreateTipoDto } from './dto/create-tipo.dto';
@@ -14,8 +14,8 @@ export class TiposEgresoController {
   constructor(private catalogosService: CatalogosService) {}
 
   @Get()
-  findAll(@TenantId() tenantId: number) {
-    return this.catalogosService.findTiposEgreso(tenantId);
+  findAll(@TenantId() tenantId: number, @Query('all') all?: string) {
+    return this.catalogosService.findTiposEgreso(tenantId, all === 'true');
   }
 
   @Post()

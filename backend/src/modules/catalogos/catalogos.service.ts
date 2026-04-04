@@ -16,9 +16,11 @@ export class CatalogosService {
     private monedaRepo: Repository<Moneda>,
   ) {}
 
-  async findTiposIngreso(tenantId: number) {
+  async findTiposIngreso(tenantId: number, includeInactive = false) {
+    const where: any = { propietarioId: tenantId };
+    if (!includeInactive) (where as any).activo = true;
     return this.tipoIngresoRepo.find({
-      where: { propietarioId: tenantId, activo: true },
+      where,
       order: { nombre: 'ASC' },
     });
   }
@@ -49,9 +51,11 @@ export class CatalogosService {
     return this.tipoIngresoRepo.save(tipo);
   }
 
-  async findTiposEgreso(tenantId: number) {
+  async findTiposEgreso(tenantId: number, includeInactive = false) {
+    const where: any = { propietarioId: tenantId };
+    if (!includeInactive) (where as any).activo = true;
     return this.tipoEgresoRepo.find({
-      where: { propietarioId: tenantId, activo: true },
+      where,
       order: { nombre: 'ASC' },
     });
   }

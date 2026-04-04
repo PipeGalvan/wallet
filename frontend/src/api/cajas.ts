@@ -1,7 +1,7 @@
 import api from './client';
 
 export const cajasApi = {
-  getAll: () => api.get('/cajas'),
+  getAll: (params?: any) => api.get('/cajas', { params }),
   getById: (id: number) => api.get(`/cajas/${id}`),
   create: (data: any) => api.post('/cajas', data),
   update: (id: number, data: any) => api.put(`/cajas/${id}`, data),

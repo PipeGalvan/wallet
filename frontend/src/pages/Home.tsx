@@ -29,7 +29,7 @@ export default function Home() {
 
   const loadCajas = async () => {
     try {
-      const { data } = await cajasApi.getAll();
+      const { data } = await cajasApi.getAll({ activo: true });
       setCajas((data as any).data || data);
     } catch {
     } finally {

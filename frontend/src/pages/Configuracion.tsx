@@ -6,8 +6,7 @@ import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Spinner from '../components/ui/Spinner';
-import Badge from '../components/ui/Badge';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type Tab = 'tipos-ingreso' | 'tipos-egreso' | 'cajas';
@@ -20,6 +19,7 @@ export default function Configuracion() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [toggling, setToggling] = useState<number | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ nombre: '' });
 
@@ -28,8 +28,8 @@ export default function Configuracion() {
   const loadData = async () => {
     try {
       const [tiRes, teRes, cajasRes] = await Promise.all([
-        catalogosApi.getTiposIngreso(),
-        catalogosApi.getTiposEgreso(),
+        catalogosApi.getTiposIngreso({ all: true }),
+        catalogosApi.getTiposEgreso({ all: true }),
         cajasApi.getAll(),
       ]);
       setTiposIngreso(tiRes.data || []);
@@ -71,17 +71,24 @@ export default function Configuracion() {
     } finally { setSaving(false); }
   };
 
-  const handleDelete = async (item: any) => {
-    if (!confirm('Desactivar este elemento?')) return;
+  const handleToggle = async (item: any) => {
+    const id = item.id || item.TipoIngresoId || item.TipoEgresoId || item.CajaId;
+    const isCurrentlyActive = getActive(item);
+    const newState = !isCurrentlyActive;
+    setToggling(id);
     try {
-      const id = item.id || item.TipoIngresoId || item.TipoEgresoId;
-      if (tab === 'tipos-ingreso') await catalogosApi.deleteTipoIngreso(id);
-      else if (tab === 'tipos-egreso') await catalogosApi.deleteTipoEgreso(id);
-      toast.success('Desactivado');
+      if (tab === 'tipos-ingreso') {
+        await catalogosApi.updateTipoIngreso(id, { nombre: getName(item), activo: newState });
+      } else if (tab === 'tipos-egreso') {
+        await catalogosApi.updateTipoEgreso(id, { nombre: getName(item), activo: newState });
+      } else if (tab === 'cajas') {
+        await cajasApi.update(id, { activo: newState });
+      }
+      toast.success(newState ? 'Activado' : 'Desactivado');
       loadData();
     } catch (err: any) {
-      toast.error(err.response?.data?.error?.message || 'Error al desactivar');
-    }
+      toast.error(err.response?.data?.error?.message || 'Error');
+    } finally { setToggling(null); }
   };
 
   const tabs: { key: Tab; label: string }[] = [
@@ -130,26 +137,37 @@ export default function Configuracion() {
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">Nombre</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">Estado</th>
+                <th className="text-center py-3 px-4 font-medium text-gray-600 dark:text-gray-400">Estado</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-400">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {currentItems.map((item: any) => {
                 const id = item.id || item.TipoIngresoId || item.TipoEgresoId || item.CajaId;
+                const isActive = getActive(item);
+                const isTogglingThis = toggling === id;
                 return (
                   <tr key={id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="py-3 px-4">{getName(item)}</td>
                     <td className="py-3 px-4">
-                      {tab === 'cajas' ? <Badge variant="info">Caja</Badge> : getActive(item) ? <Badge variant="success">Activo</Badge> : <Badge variant="danger">Inactivo</Badge>}
+                      <div className="flex items-center justify-center">
+                        <button
+                          onClick={() => handleToggle(item)}
+                          disabled={isTogglingThis}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                            isActive ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                          } ${isTogglingThis ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              isActive ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <div className="flex gap-2 justify-end">
-                        <button onClick={() => openEdit(item)} className="p-1 text-gray-400 hover:text-blue-600"><Pencil size={16} /></button>
-                        {tab !== 'cajas' && (
-                          <button onClick={() => handleDelete(item)} className="p-1 text-gray-400 hover:text-red-600"><Trash2 size={16} /></button>
-                        )}
-                      </div>
+                      <button onClick={() => openEdit(item)} className="p-1 text-gray-400 hover:text-blue-600"><Pencil size={16} /></button>
                     </td>
                   </tr>
                 );

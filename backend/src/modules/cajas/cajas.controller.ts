@@ -23,8 +23,8 @@ export class CajasController {
   constructor(private cajasService: CajasService) {}
 
   @Get()
-  findAll(@TenantId() tenantId: number) {
-    return this.cajasService.findAll(tenantId);
+  findAll(@TenantId() tenantId: number, @Query('activo') activ?: string) {
+    return this.cajasService.findAll(tenantId, activ === 'true');
   }
 
   @Get(':id')

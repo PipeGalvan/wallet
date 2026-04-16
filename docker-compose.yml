@@ -6,8 +6,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      # 1. Cambiamos la IP local por el Internal Host de tu servicio MySQL en Dokploy
-      - DB_HOST=mysql://admin:KkpjCL8XpWQXDufIIifR@infradb-mysqlmain-j1dmbb:3306/mysql 
+      # Host interno del servicio MySQL en Dokploy (solo el hostname, no URL completa)
+      - DB_HOST=infradb-mysqlmain-j1dmbb
       - DB_PORT=3306
       - DB_USERNAME=admin
       - DB_PASSWORD=KkpjCL8XpWQXDufIIifR

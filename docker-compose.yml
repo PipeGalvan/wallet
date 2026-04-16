@@ -6,22 +6,34 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - DB_HOST=172.25.144.1
+      # 1. Cambiamos la IP local por el Internal Host de tu servicio MySQL en Dokploy
+      - DB_HOST=mysql://admin:KkpjCL8XpWQXDufIIifR@infradb-mysqlmain-j1dmbb:3306/mysql 
       - DB_PORT=3306
-      - DB_USERNAME=gx
-      - DB_PASSWORD=NuntiusGX2019!
+      - DB_USERNAME=admin
+      - DB_PASSWORD=KkpjCL8XpWQXDufIIifR
       - DB_DATABASE=nuntius
-      - JWT_SECRET=wallet-jwt-secret-change-in-production
-      - JWT_EXPIRES_IN=60m
+      - JWT_SECRET=WF//xrxgqyEpIZk7PKOS0LEYMTcwS7oGK7/JCJxvGvw=
+      - JWT_EXPIRES_IN=120m
       - NODE_ENV=production
+    networks:
+      - dokploy-network # Para que pueda hablar con la red del panel
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "80:80"
+    # 2. IMPORTANTE: En Dokploy NO mapeamos puertos 80:80 manualmente.
+    # Traefik (el proxy de Dokploy) se encarga de eso mediante la red.
+    expose:
+      - "80" 
     depends_on:
       - backend
+    networks:
+      - dokploy-network
     restart: unless-stopped
+
+# 3. Definimos la red externa que usa Dokploy para que Traefik vea tus contenedores
+networks:
+  dokploy-network:
+    external: true

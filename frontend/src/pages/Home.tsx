@@ -5,8 +5,6 @@ import Card from '../components/ui/Card';
 import Spinner from '../components/ui/Spinner';
 import { formatMoney } from '../utils/format';
 import { MONEDA_SYMBOLS } from '../utils/constants';
-import { ArrowDownCircle, ArrowUpCircle, Repeat } from 'lucide-react';
-import Button from '../components/ui/Button';
 import { useAuthStore } from '../store/authStore';
 
 interface CajaWithSaldo {
@@ -43,17 +41,6 @@ export default function Home() {
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Mis Cajas</h1>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="success" onClick={() => navigate('/ingresos?new=true')}>
-            <ArrowDownCircle size={16} className="mr-1" /> Ingreso
-          </Button>
-          <Button variant="danger" onClick={() => navigate('/egresos?new=true')}>
-            <ArrowUpCircle size={16} className="mr-1" /> Egreso
-          </Button>
-          <Button variant="secondary" onClick={() => {}}>
-            <Repeat size={16} className="mr-1" /> Transferir
-          </Button>
-        </div>
       </div>
 
       {cajas.length === 0 ? (

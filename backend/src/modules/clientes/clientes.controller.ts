@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete, Body, Param,
+  Controller, Get, Post, Put, Delete, Body, Param, Query,
   ParseIntPipe, UseGuards,
 } from '@nestjs/common';
 import { ClientesService } from './clientes.service';
@@ -15,8 +15,8 @@ export class ClientesController {
   constructor(private clientesService: ClientesService) {}
 
   @Get()
-  findAll(@TenantId() tenantId: number) {
-    return this.clientesService.findAll(tenantId);
+  findAll(@TenantId() tenantId: number, @Query('all') all?: string) {
+    return this.clientesService.findAll(tenantId, all === 'true');
   }
 
   @Get(':id')

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { cajasApi } from '../api/cajas';
 import { catalogosApi } from '../api/catalogos';
+import { clientesApi } from '../api/clientes';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
@@ -9,13 +10,14 @@ import Spinner from '../components/ui/Spinner';
 import { Plus, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-type Tab = 'tipos-ingreso' | 'tipos-egreso' | 'cajas';
+type Tab = 'tipos-ingreso' | 'tipos-egreso' | 'cajas' | 'clientes';
 
 export default function Configuracion() {
   const [tab, setTab] = useState<Tab>('tipos-ingreso');
   const [tiposIngreso, setTiposIngreso] = useState<any[]>([]);
   const [tiposEgreso, setTiposEgreso] = useState<any[]>([]);
   const [cajas, setCajas] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -27,14 +29,16 @@ export default function Configuracion() {
 
   const loadData = async () => {
     try {
-      const [tiRes, teRes, cajasRes] = await Promise.all([
+      const [tiRes, teRes, cajasRes, clientesRes] = await Promise.all([
         catalogosApi.getTiposIngreso({ all: true }),
         catalogosApi.getTiposEgreso({ all: true }),
         cajasApi.getAll(),
+        clientesApi.getAll({ all: true }),
       ]);
       setTiposIngreso(tiRes.data || []);
       setTiposEgreso(teRes.data || []);
       setCajas(((cajasRes.data as any).data || cajasRes.data) || []);
+      setClientes((clientesRes.data as any) || []);
     } catch {} finally { setLoading(false); }
   };
 
@@ -62,6 +66,9 @@ export default function Configuracion() {
       } else if (tab === 'cajas') {
         if (editId) await cajasApi.update(editId, { nombre: form.nombre });
         else await cajasApi.create({ nombre: form.nombre, fecha: new Date().toISOString().split('T')[0] });
+      } else if (tab === 'clientes') {
+        if (editId) await clientesApi.update(editId, { nombre: form.nombre });
+        else await clientesApi.create({ nombre: form.nombre });
       }
       toast.success(editId ? 'Actualizado' : 'Creado');
       setShowModal(false);
@@ -83,6 +90,8 @@ export default function Configuracion() {
         await catalogosApi.updateTipoEgreso(id, { nombre: getName(item), activo: newState });
       } else if (tab === 'cajas') {
         await cajasApi.update(id, { activo: newState });
+      } else if (tab === 'clientes') {
+        await clientesApi.update(id, { nombre: getName(item), activo: newState });
       }
       toast.success(newState ? 'Activado' : 'Desactivado');
       loadData();
@@ -95,14 +104,17 @@ export default function Configuracion() {
     { key: 'tipos-ingreso', label: 'Tipos de Ingreso' },
     { key: 'tipos-egreso', label: 'Tipos de Egreso' },
     { key: 'cajas', label: 'Cajas' },
+    { key: 'clientes', label: 'Clientes' },
   ];
 
-  const currentItems = tab === 'tipos-ingreso' ? tiposIngreso : tab === 'tipos-egreso' ? tiposEgreso : cajas;
+  const currentItems = tab === 'tipos-ingreso' ? tiposIngreso : tab === 'tipos-egreso' ? tiposEgreso : tab === 'cajas' ? cajas : clientes;
 
   const getName = (item: any) => item.nombre || item.TipoIngresoNombre || item.TipoEgresoNombre || item.CajaNombre || '-';
 
   const getActive = (item: any) => {
     const val = item.activo !== undefined ? item.activo : item.TipoIngresoActivo !== undefined ? item.TipoIngresoActivo : item.TipoEgresoActivo;
+    // For items without activo field (legacy data), treat as active
+    if (item.activo === undefined && item.TipoIngresoActivo === undefined && item.TipoEgresoActivo === undefined) return true;
     return val !== false;
   };
 

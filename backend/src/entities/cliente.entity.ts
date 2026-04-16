@@ -15,6 +15,9 @@ export class Cliente {
   @Column({ name: 'ClienteObservaciones', type: 'mediumtext', nullable: true })
   observaciones: string;
 
+  @Column({ name: 'ClienteActivo', nullable: true, default: true })
+  activo: boolean;
+
   @ManyToOne(() => Propietario, (p) => p.clientes)
   @JoinColumn({ name: 'PropietarioId' })
   propietario: Propietario;

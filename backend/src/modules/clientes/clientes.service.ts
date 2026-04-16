@@ -12,9 +12,11 @@ export class ClientesService {
     private clienteRepo: Repository<Cliente>,
   ) {}
 
-  async findAll(tenantId: number) {
+  async findAll(tenantId: number, includeInactive = false) {
+    const where: any = { propietarioId: tenantId };
+    if (!includeInactive) where.activo = true;
     return this.clienteRepo.find({
-      where: { propietarioId: tenantId },
+      where,
       order: { nombre: 'ASC' },
     });
   }
@@ -32,6 +34,7 @@ export class ClientesService {
       nombre: dto.nombre,
       observaciones: dto.observaciones || undefined,
       propietarioId: tenantId,
+      activo: true,
     });
     return this.clienteRepo.save(cliente);
   }
@@ -40,12 +43,13 @@ export class ClientesService {
     const cliente = await this.findOne(tenantId, id);
     if (dto.nombre !== undefined) cliente.nombre = dto.nombre;
     if (dto.observaciones !== undefined) cliente.observaciones = dto.observaciones;
+    if (dto.activo !== undefined) cliente.activo = dto.activo;
     return this.clienteRepo.save(cliente);
   }
 
   async remove(tenantId: number, id: number) {
     const cliente = await this.findOne(tenantId, id);
-    await this.clienteRepo.remove(cliente);
-    return { deleted: true };
+    cliente.activo = false;
+    return this.clienteRepo.save(cliente);
   }
 }

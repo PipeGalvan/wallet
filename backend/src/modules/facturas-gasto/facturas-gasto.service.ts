@@ -41,13 +41,13 @@ export class FacturasGastoService {
 
   async create(tenantId: number, dto: CreateFacturaGastoDto) {
     const factura = this.facturaGastoRepo.create({
-      fecha: new Date(dto.fecha),
+      fecha: dto.fecha as any,
       tipoEgresoId: dto.tipoEgresoId,
       importe: dto.importe,
       saldo: dto.importe,
       monedaId: dto.monedaId,
       observacion: dto.observacion || undefined,
-      fechaVencimiento: dto.fechaVencimiento ? new Date(dto.fechaVencimiento) : undefined,
+      fechaVencimiento: dto.fechaVencimiento ? (dto.fechaVencimiento as any) : undefined,
       propietarioId: tenantId,
     });
     return this.facturaGastoRepo.save(factura);
@@ -55,11 +55,11 @@ export class FacturasGastoService {
 
   async update(tenantId: number, id: number, dto: Partial<CreateFacturaGastoDto>) {
     const factura = await this.findOne(tenantId, id);
-    if (dto.fecha) factura.fecha = new Date(dto.fecha);
+    if (dto.fecha) factura.fecha = dto.fecha as any;
     if (dto.tipoEgresoId) factura.tipoEgresoId = dto.tipoEgresoId;
     if (dto.observacion !== undefined) factura.observacion = dto.observacion;
     if (dto.monedaId) factura.monedaId = dto.monedaId;
-    if (dto.fechaVencimiento) factura.fechaVencimiento = new Date(dto.fechaVencimiento);
+    if (dto.fechaVencimiento) factura.fechaVencimiento = dto.fechaVencimiento as any;
     return this.facturaGastoRepo.save(factura);
   }
 

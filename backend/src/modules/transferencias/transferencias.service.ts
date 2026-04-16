@@ -51,7 +51,7 @@ export class TransferenciasService {
       const destinoCD = await this.getOrCreateCajaDiaria(manager, dto.cajaDestinoId);
 
       const egreso = manager.create(Egreso, {
-        fecha: new Date(dto.fecha),
+        fecha: dto.fecha as any,
         fechaHora: new Date(),
         tipoEgresoId: 24,
         observacion: 'TRANSFERENCIA',
@@ -63,7 +63,7 @@ export class TransferenciasService {
       await manager.save(egreso);
 
       const ingreso = manager.create(Ingreso, {
-        fecha: new Date(dto.fecha),
+        fecha: dto.fecha as any,
         fechaHora: new Date(),
         tipoIngresoId: 5,
         observacion: 'TRANSFERENCIA',
@@ -75,7 +75,7 @@ export class TransferenciasService {
       await manager.save(ingreso);
 
       const transferencia = manager.create(Transferencia, {
-        fecha: new Date(dto.fecha),
+        fecha: dto.fecha as any,
         origenCajaDiariaId: origenCD.id,
         destinoCajaDiariaId: destinoCD.id,
         monedaId: dto.monedaId,

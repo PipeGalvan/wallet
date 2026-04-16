@@ -9,11 +9,10 @@ export function formatMoney(amount: number, currency: string = '$'): string {
 }
 
 export function formatDate(date: string | Date): string {
-  return new Intl.DateTimeFormat('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(date));
+  if (!date) return '';
+  const str = typeof date === 'string' ? date : date.toISOString();
+  const [year, month, day] = str.split('T')[0].split('-');
+  return `${day}/${month}/${year}`;
 }
 
 export function formatDateTime(date: string | Date): string {

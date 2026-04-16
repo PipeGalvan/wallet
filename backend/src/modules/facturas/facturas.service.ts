@@ -49,7 +49,7 @@ export class FacturasService {
 
   async create(tenantId: number, dto: CreateFacturaDto) {
     const factura = this.facturaRepo.create({
-      fecha: new Date(dto.fecha),
+      fecha: dto.fecha as any,
       clienteId: dto.clienteId,
       importe: dto.importe,
       saldo: dto.importe,
@@ -62,7 +62,7 @@ export class FacturasService {
 
   async update(tenantId: number, id: number, dto: Partial<CreateFacturaDto>) {
     const factura = await this.findOne(tenantId, id);
-    if (dto.fecha) factura.fecha = new Date(dto.fecha);
+    if (dto.fecha) factura.fecha = dto.fecha as any;
     if (dto.clienteId) factura.clienteId = dto.clienteId;
     if (dto.observacion !== undefined) factura.observacion = dto.observacion;
     if (dto.monedaId) factura.monedaId = dto.monedaId;

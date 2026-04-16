@@ -55,7 +55,7 @@ export class CajasService {
   async create(tenantId: number, dto: CreateCajaDto) {
     const caja = this.cajaRepo.create({
       nombre: dto.nombre,
-      fecha: dto.fecha ? new Date(dto.fecha) : new Date(),
+      fecha: (dto.fecha || new Date()) as any,
       activo: true,
       propietarioId: tenantId,
       totalizar: dto.totalizar ?? true,
@@ -99,12 +99,12 @@ export class CajasService {
       this.ingresoRepo.find({
         where: cdIds.map((id) => ({ cajaDiariaId: id, propietarioId: tenantId })),
         relations: ['tipoIngreso', 'moneda', 'cliente'],
-        order: { fechaHora: 'DESC' },
+        order: { fecha: 'DESC', fechaHora: 'DESC' },
       }),
       this.egresoRepo.find({
         where: cdIds.map((id) => ({ cajaDiariaId: id, propietarioId: tenantId })),
         relations: ['tipoEgreso', 'moneda'],
-        order: { fechaHora: 'DESC' },
+        order: { fecha: 'DESC', fechaHora: 'DESC' },
       }),
     ]);
 
@@ -131,7 +131,11 @@ export class CajasService {
         moneda: e.moneda?.nombre || '',
         cliente: null,
       })),
-    ].sort((a, b) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime());
+    ].sort((a, b) => {
+      const fechaDiff = new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+      if (fechaDiff !== 0) return fechaDiff;
+      return new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime();
+    });
 
     const total = movimientos.length;
     const start = (page - 1) * limit;

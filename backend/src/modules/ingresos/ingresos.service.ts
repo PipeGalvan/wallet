@@ -72,7 +72,7 @@ export class IngresosService {
     }
 
     const ingreso = this.ingresoRepo.create({
-      fecha: new Date(dto.fecha),
+      fecha: dto.fecha as any,
       tipoIngresoId: dto.tipoIngresoId,
       clienteId: dto.clienteId || undefined,
       observacion: dto.observacion || undefined,
@@ -88,7 +88,7 @@ export class IngresosService {
 
   async update(tenantId: number, id: number, dto: UpdateIngresoDto) {
     const ingreso = await this.findOne(tenantId, id);
-    if (dto.fecha) ingreso.fecha = new Date(dto.fecha);
+    if (dto.fecha) ingreso.fecha = dto.fecha as any;
     if (dto.tipoIngresoId) ingreso.tipoIngresoId = dto.tipoIngresoId;
     if (dto.clienteId !== undefined) ingreso.clienteId = dto.clienteId;
     if (dto.observacion !== undefined) ingreso.observacion = dto.observacion;

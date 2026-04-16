@@ -71,7 +71,7 @@ export class EgresosService {
     }
 
     const egreso = this.egresoRepo.create({
-      fecha: new Date(dto.fecha),
+      fecha: dto.fecha as any,
       tipoEgresoId: dto.tipoEgresoId,
       observacion: dto.observacion || undefined,
       importe: dto.importe,
@@ -86,7 +86,7 @@ export class EgresosService {
 
   async update(tenantId: number, id: number, dto: UpdateEgresoDto) {
     const egreso = await this.findOne(tenantId, id);
-    if (dto.fecha) egreso.fecha = new Date(dto.fecha);
+    if (dto.fecha) egreso.fecha = dto.fecha as any;
     if (dto.tipoEgresoId) egreso.tipoEgresoId = dto.tipoEgresoId;
     if (dto.observacion !== undefined) egreso.observacion = dto.observacion;
     if (dto.monedaId) egreso.monedaId = dto.monedaId;

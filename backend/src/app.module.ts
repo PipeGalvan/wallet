@@ -17,6 +17,7 @@ import { ClientesModule } from './modules/clientes/clientes.module';
 import { CatalogosModule } from './modules/catalogos/catalogos.module';
 import { ReportesModule } from './modules/reportes/reportes.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { MovimientosRecurrentesModule } from './modules/movimientos-recurrentes/movimientos-recurrentes.module';
 import * as entities from './entities';
 
 @Module({
@@ -53,6 +54,7 @@ import * as entities from './entities';
     CatalogosModule,
     ReportesModule,
     AdminModule,
+    MovimientosRecurrentesModule,
   ],
 })
 export class AppModule {}

@@ -10,6 +10,7 @@ import { Factura } from './factura.entity';
 import { FacturaGasto } from './facturagasto.entity';
 import { PlanillaGastos } from './planillagastos.entity';
 import { PlanillaCobros } from './planillacobros.entity';
+import { MovimientoRecurrente } from './movimientorecurrente.entity';
 
 @Entity('propietario')
 export class Propietario {
@@ -51,4 +52,7 @@ export class Propietario {
 
   @OneToMany(() => PlanillaCobros, (p) => p.propietario)
   planillasCobros: PlanillaCobros[];
+
+  @OneToMany(() => MovimientoRecurrente, (mr) => mr.propietario)
+  movimientosRecurrentes: MovimientoRecurrente[];
 }

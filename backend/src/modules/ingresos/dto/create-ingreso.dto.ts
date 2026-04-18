@@ -24,4 +24,8 @@ export class CreateIngresoDto {
 
   @IsNumber()
   cajaId: number;
+
+  @IsOptional()
+  @IsNumber()
+  movimientoRecurrenteId?: number;
 }

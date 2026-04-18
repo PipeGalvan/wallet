@@ -20,4 +20,8 @@ export class CreateEgresoDto {
 
   @IsNumber()
   cajaId: number;
+
+  @IsOptional()
+  @IsNumber()
+  movimientoRecurrenteId?: number;
 }

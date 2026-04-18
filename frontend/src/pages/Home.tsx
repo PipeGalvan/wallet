@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cajasApi } from '../api/cajas';
+import { movimientosRecurrentesApi } from '../api/movimientos-recurrentes';
 import Card from '../components/ui/Card';
 import Spinner from '../components/ui/Spinner';
 import { formatMoney } from '../utils/format';
@@ -17,13 +18,25 @@ interface CajaWithSaldo {
 export default function Home() {
   const [cajas, setCajas] = useState<CajaWithSaldo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
   const navigate = useNavigate();
   const tenantId = useAuthStore((s) => s.tenantId);
 
   useEffect(() => {
     setLoading(true);
     loadCajas();
+    loadPendientes();
   }, [tenantId]);
+
+  const loadPendientes = async () => {
+    try {
+      const { data } = await movimientosRecurrentesApi.getPendientes();
+      const items = (data as any).data || data;
+      setPendingCount(Array.isArray(items) ? items.length : 0);
+    } catch {
+      setPendingCount(null);
+    }
+  };
 
   const loadCajas = async () => {
     try {
@@ -42,6 +55,20 @@ export default function Home() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Mis Cajas</h1>
       </div>
+
+      {pendingCount !== null && pendingCount > 0 && (
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-900/30">
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+            Tenés {pendingCount} movimiento{pendingCount !== 1 ? 's' : ''} recurrente{pendingCount !== 1 ? 's' : ''} pendiente{pendingCount !== 1 ? 's' : ''}
+          </p>
+          <button
+            onClick={() => navigate('/movimientos-recurrentes')}
+            className="whitespace-nowrap rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 transition-colors"
+          >
+            Ver Pendientes
+          </button>
+        </div>
+      )}
 
       {cajas.length === 0 ? (
         <Card>

@@ -13,6 +13,7 @@ import FacturasGasto from './pages/FacturasGasto';
 import Transferencias from './pages/Transferencias';
 import PlanillaGastos from './pages/PlanillaGastos';
 import PlanillaCobros from './pages/PlanillaCobros';
+import MovimientosRecurrentes from './pages/MovimientosRecurrentes';
 import Informes from './pages/Informes';
 import Configuracion from './pages/Configuracion';
 
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="facturas-gasto" element={<FacturasGasto />} />
         <Route path="planilla-gastos" element={<PlanillaGastos />} />
         <Route path="planilla-cobros" element={<PlanillaCobros />} />
+        <Route path="movimientos-recurrentes" element={<MovimientosRecurrentes />} />
         <Route path="informes" element={<Informes />} />
         <Route path="configuracion" element={<Configuracion />} />
       </Route>

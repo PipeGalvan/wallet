@@ -79,6 +79,7 @@ export class EgresosService {
       cajaDiariaId: cajaDiaria.id,
       propietarioId: tenantId,
       fechaHora: new Date(),
+      movimientoRecurrenteId: dto.movimientoRecurrenteId || undefined,
     });
 
     return this.egresoRepo.save(egreso);

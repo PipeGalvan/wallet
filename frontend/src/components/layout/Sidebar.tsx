@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import {
-  Home, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Users, FileText, FileDown,
+  Home, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Repeat, Users, FileText, FileDown,
   ClipboardList, ClipboardCheck, BarChart3, Settings, LogOut, Wallet,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -11,6 +11,7 @@ const navItems = [
   { to: '/ingresos', icon: ArrowDownCircle, label: 'Ingresos' },
   { to: '/egresos', icon: ArrowUpCircle, label: 'Egresos' },
   { to: '/transferencias', icon: ArrowRightLeft, label: 'Transferencias' },
+  { to: '/movimientos-recurrentes', icon: Repeat, label: 'Recurrentes' },
   { to: '/clientes', icon: Users, label: 'Clientes' },
   { to: '/facturas', icon: FileText, label: 'Facturas a Cobrar' },
   { to: '/facturas-gasto', icon: FileDown, label: 'Facturas a Pagar' },

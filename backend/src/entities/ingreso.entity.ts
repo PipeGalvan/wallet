@@ -4,6 +4,7 @@ import { Cliente } from './cliente.entity';
 import { CajaDiaria } from './cajadiaria.entity';
 import { Moneda } from './moneda.entity';
 import { Propietario } from './propietario.entity';
+import { MovimientoRecurrente } from './movimientorecurrente.entity';
 
 @Entity('ingreso')
 export class Ingreso {
@@ -56,4 +57,11 @@ export class Ingreso {
   @ManyToOne(() => Propietario, (p) => p.ingresos)
   @JoinColumn({ name: 'IngresoPropietarioId' })
   propietario: Propietario;
+
+  @Column({ name: 'MovimientoRecurrenteId', nullable: true })
+  movimientoRecurrenteId: number;
+
+  @ManyToOne(() => MovimientoRecurrente)
+  @JoinColumn({ name: 'MovimientoRecurrenteId' })
+  movimientoRecurrente: MovimientoRecurrente;
 }

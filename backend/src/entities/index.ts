@@ -20,3 +20,4 @@ export { PlanillaCobrosDetalle } from './planillacobrosdetalle.entity';
 export { SaldoCaja } from './saldocaja.entity';
 export { Auditoria } from './auditoria.entity';
 export { ConversionMoneda } from './conversionmoneda.entity';
+export { MovimientoRecurrente } from './movimientorecurrente.entity';

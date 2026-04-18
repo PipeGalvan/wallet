@@ -81,6 +81,7 @@ export class IngresosService {
       cajaDiariaId: cajaDiaria.id,
       propietarioId: tenantId,
       fechaHora: new Date(),
+      movimientoRecurrenteId: dto.movimientoRecurrenteId || undefined,
     });
 
     return this.ingresoRepo.save(ingreso);

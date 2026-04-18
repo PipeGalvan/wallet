@@ -91,4 +91,47 @@ export class ReportesService {
       order: { id: 'DESC' },
     });
   }
+
+  async getAgrupadoPorTipo(tenantId: number, fechaDesde?: string, fechaHasta?: string) {
+    const ingresoQuery = this.ingresoRepo
+      .createQueryBuilder('i')
+      .leftJoin('i.tipoIngreso', 'ti')
+      .select('i.TipoIngresoId', 'tipoId')
+      .addSelect('ti.TipoIngresoNombre', 'tipoNombre')
+      .addSelect('i.MonedaId', 'monedaId')
+      .addSelect('COALESCE(SUM(i.IngresoImporte), 0)', 'total')
+      .where('i.IngresoPropietarioId = :tenantId', { tenantId });
+
+    const egresoQuery = this.egresoRepo
+      .createQueryBuilder('e')
+      .leftJoin('e.tipoEgreso', 'te')
+      .select('e.TipoEgresoId', 'tipoId')
+      .addSelect('te.TipoEgresoNombre', 'tipoNombre')
+      .addSelect('e.MonedaId', 'monedaId')
+      .addSelect('COALESCE(SUM(e.EgresoImporte), 0)', 'total')
+      .where('e.EgresoPropietarioId = :tenantId', { tenantId });
+
+    if (fechaDesde) {
+      ingresoQuery.andWhere('i.IngresoFecha >= :fechaDesde', { fechaDesde });
+      egresoQuery.andWhere('e.EgresoFecha >= :fechaDesde', { fechaDesde });
+    }
+    if (fechaHasta) {
+      ingresoQuery.andWhere('i.IngresoFecha <= :fechaHasta', { fechaHasta });
+      egresoQuery.andWhere('e.EgresoFecha <= :fechaHasta', { fechaHasta });
+    }
+
+    const ingresos = await ingresoQuery
+      .groupBy('i.TipoIngresoId')
+      .addGroupBy('ti.TipoIngresoNombre')
+      .addGroupBy('i.MonedaId')
+      .getRawMany();
+
+    const egresos = await egresoQuery
+      .groupBy('e.TipoEgresoId')
+      .addGroupBy('te.TipoEgresoNombre')
+      .addGroupBy('e.MonedaId')
+      .getRawMany();
+
+    return { ingresos, egresos };
+  }
 }

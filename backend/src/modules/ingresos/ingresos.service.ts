@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Raw } from 'typeorm';
 import { Ingreso } from '../../entities/ingreso.entity';
 import { CajaDiaria } from '../../entities/cajadiaria.entity';
 import { CreateIngresoDto } from './dto/create-ingreso.dto';
@@ -16,31 +16,32 @@ export class IngresosService {
   ) {}
 
   async findAll(tenantId: number, page = 1, limit = 20, filters?: any) {
-    const query = this.ingresoRepo
-      .createQueryBuilder('i')
-      .leftJoinAndSelect('i.tipoIngreso', 'ti')
-      .leftJoinAndSelect('i.moneda', 'm')
-      .leftJoinAndSelect('i.cliente', 'c')
-      .where('i.IngresoPropietarioId = :tenantId', { tenantId })
-      .orderBy('i.IngresoFechaHora', 'DESC');
+    const where: any = { propietarioId: tenantId };
 
     if (filters?.fechaDesde) {
-      query.andWhere('i.IngresoFecha >= :fechaDesde', { fechaDesde: filters.fechaDesde });
+      where.fecha = Raw((alias) => `${alias} >= :fechaDesde`, { fechaDesde: filters.fechaDesde });
     }
     if (filters?.fechaHasta) {
-      query.andWhere('i.IngresoFecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
+      if (where.fecha) {
+        // Combine both date filters — need a different approach
+        where.fecha = Raw((alias) => `${alias} >= :fechaDesde AND ${alias} <= :fechaHasta`, { fechaDesde: filters.fechaDesde, fechaHasta: filters.fechaHasta });
+      } else {
+        where.fecha = Raw((alias) => `${alias} <= :fechaHasta`, { fechaHasta: filters.fechaHasta });
+      }
     }
-    if (filters?.monedaId) {
-      query.andWhere('i.MonedaId = :monedaId', { monedaId: filters.monedaId });
-    }
-    if (filters?.tipoIngresoId) {
-      query.andWhere('i.TipoIngresoId = :tipoIngresoId', { tipoIngresoId: filters.tipoIngresoId });
+    if (filters?.monedaId) where.monedaId = filters.monedaId;
+    if (filters?.tipoIngresoId) where.tipoIngresoId = filters.tipoIngresoId;
+    if (filters?.search) {
+      where.observacion = Raw((alias) => `${alias} LIKE :search`, { search: `%${filters.search}%` });
     }
 
-    const [data, total] = await query
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
+    const [data, total] = await this.ingresoRepo.findAndCount({
+      where,
+      relations: ['tipoIngreso', 'moneda', 'cliente'],
+      order: { fechaHora: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
     return {
       data,

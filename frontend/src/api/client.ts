@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
@@ -20,7 +21,16 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
       window.location.href = '/login';
+    } else if (error.response?.status >= 500) {
+      // Server errors: always show global toast (these are unexpected)
+      const msg =
+        error.response?.data?.error?.message ||
+        error.response?.data?.message ||
+        'Error del servidor. Intentá de nuevo más tarde.';
+      toast.error(msg, { id: `err-${status}-${msg.substring(0, 30)}` });
     }
+    // 400-level errors (validation, not found, etc.) are handled by pages
+    // Don't show global toast to avoid double toasts
     return Promise.reject(error);
   },
 );

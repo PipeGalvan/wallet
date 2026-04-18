@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Raw } from 'typeorm';
 import { Egreso } from '../../entities/egreso.entity';
 import { CajaDiaria } from '../../entities/cajadiaria.entity';
 import { CreateEgresoDto } from './dto/create-egreso.dto';
@@ -16,30 +16,31 @@ export class EgresosService {
   ) {}
 
   async findAll(tenantId: number, page = 1, limit = 20, filters?: any) {
-    const query = this.egresoRepo
-      .createQueryBuilder('e')
-      .leftJoinAndSelect('e.tipoEgreso', 'te')
-      .leftJoinAndSelect('e.moneda', 'm')
-      .where('e.EgresoPropietarioId = :tenantId', { tenantId })
-      .orderBy('e.EgresoFechaHora', 'DESC');
+    const where: any = { propietarioId: tenantId };
 
     if (filters?.fechaDesde) {
-      query.andWhere('e.EgresoFecha >= :fechaDesde', { fechaDesde: filters.fechaDesde });
+      where.fecha = Raw((alias) => `${alias} >= :fechaDesde`, { fechaDesde: filters.fechaDesde });
     }
     if (filters?.fechaHasta) {
-      query.andWhere('e.EgresoFecha <= :fechaHasta', { fechaHasta: filters.fechaHasta });
+      if (where.fecha) {
+        where.fecha = Raw((alias) => `${alias} >= :fechaDesde AND ${alias} <= :fechaHasta`, { fechaDesde: filters.fechaDesde, fechaHasta: filters.fechaHasta });
+      } else {
+        where.fecha = Raw((alias) => `${alias} <= :fechaHasta`, { fechaHasta: filters.fechaHasta });
+      }
     }
-    if (filters?.monedaId) {
-      query.andWhere('e.MonedaId = :monedaId', { monedaId: filters.monedaId });
-    }
-    if (filters?.tipoEgresoId) {
-      query.andWhere('e.TipoEgresoId = :tipoEgresoId', { tipoEgresoId: filters.tipoEgresoId });
+    if (filters?.monedaId) where.monedaId = filters.monedaId;
+    if (filters?.tipoEgresoId) where.tipoEgresoId = filters.tipoEgresoId;
+    if (filters?.search) {
+      where.observacion = Raw((alias) => `${alias} LIKE :search`, { search: `%${filters.search}%` });
     }
 
-    const [data, total] = await query
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
+    const [data, total] = await this.egresoRepo.findAndCount({
+      where,
+      relations: ['tipoEgreso', 'moneda'],
+      order: { fechaHora: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
     return {
       data,

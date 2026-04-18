@@ -31,12 +31,14 @@ export class EgresosController {
     @Query('fechaHasta') fechaHasta?: string,
     @Query('monedaId') monedaId?: string,
     @Query('tipoEgresoId') tipoEgresoId?: string,
+    @Query('search') search?: string,
   ) {
     return this.egresosService.findAll(tenantId, parseInt(page || '1'), parseInt(limit || '20'), {
       fechaDesde,
       fechaHasta,
       monedaId: monedaId ? parseInt(monedaId) : undefined,
       tipoEgresoId: tipoEgresoId ? parseInt(tipoEgresoId) : undefined,
+      search,
     });
   }
 

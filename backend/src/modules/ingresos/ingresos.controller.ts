@@ -31,12 +31,14 @@ export class IngresosController {
     @Query('fechaHasta') fechaHasta?: string,
     @Query('monedaId') monedaId?: string,
     @Query('tipoIngresoId') tipoIngresoId?: string,
+    @Query('search') search?: string,
   ) {
     return this.ingresosService.findAll(tenantId, parseInt(page || '1'), parseInt(limit || '20'), {
       fechaDesde,
       fechaHasta,
       monedaId: monedaId ? parseInt(monedaId) : undefined,
       tipoIngresoId: tipoIngresoId ? parseInt(tipoIngresoId) : undefined,
+      search,
     });
   }
 

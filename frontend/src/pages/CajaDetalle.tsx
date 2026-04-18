@@ -55,6 +55,37 @@ export default function CajaDetalle() {
   const [formConversion, setFormConversion] = useState({ monedaOrigenId: '1', monedaDestinoId: '2', tipoCambio: 0, importe: 0 });
   const [formFactura, setFormFactura] = useState({ fecha: new Date().toISOString().split('T')[0], clienteId: '', importe: 0, monedaId: '1', observacion: '' });
   const [formFacturaGasto, setFormFacturaGasto] = useState({ fecha: new Date().toISOString().split('T')[0], tipoEgresoId: '', importe: 0, monedaId: '1', observacion: '', fechaVencimiento: '' });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // ──── Validation ────
+
+  const validateIngreso = (): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (!formIngreso.tipoIngresoId) errors.tipoIngresoId = 'Seleccioná un tipo de ingreso';
+    if (!formIngreso.importe || formIngreso.importe <= 0) errors.importe = 'Ingresá un importe válido';
+    if (!formIngreso.fecha) errors.fecha = 'Seleccioná una fecha';
+    return errors;
+  };
+
+  const validateEgreso = (): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (!formEgreso.tipoEgresoId) errors.tipoEgresoId = 'Seleccioná un tipo de egreso';
+    if (!formEgreso.importe || formEgreso.importe <= 0) errors.importe = 'Ingresá un importe válido';
+    if (!formEgreso.fecha) errors.fecha = 'Seleccioná una fecha';
+    return errors;
+  };
+
+  const validateTransferencia = (): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (!formTransferencia.cajaDestinoId) errors.cajaDestinoId = 'Seleccioná una caja destino';
+    if (!formTransferencia.importe || formTransferencia.importe <= 0) errors.importe = 'Ingresá un importe válido';
+    if (!formTransferencia.fecha) errors.fecha = 'Seleccioná una fecha';
+    return errors;
+  };
+
+  const clearFieldError = (field: string) => {
+    setFormErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
+  };
 
   useEffect(() => { loadData(); }, [cajaId]);
 
@@ -107,8 +138,8 @@ export default function CajaDetalle() {
         importe: Math.abs(Number(data.importe || data.IngresoImporte || mov.importe)),
       });
       setActiveModal('ingreso');
-    } catch (err: any) {
-      toast.error('Error al cargar ingreso');
+    } catch {
+      // server error handled by global interceptor
     }
   };
 
@@ -125,12 +156,14 @@ export default function CajaDetalle() {
         importe: Math.abs(Number(data.importe || data.EgresoImporte || mov.importe)),
       });
       setActiveModal('egreso');
-    } catch (err: any) {
-      toast.error('Error al cargar egreso');
+    } catch {
+      // server error handled by global interceptor
     }
   };
 
   const handleIngreso = async () => {
+    const errors = validateIngreso();
+    if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
     setSaving(true);
     try {
       if (editingMovimiento) {
@@ -155,14 +188,17 @@ export default function CajaDetalle() {
         });
         toast.success('Ingreso registrado');
       }
+      setFormErrors({});
       setActiveModal(null);
       setEditingMovimiento(null);
       setFormIngreso({ ...defaultFormIngreso });
       reloadMovimientos();
-    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Error'); } finally { setSaving(false); }
+    } catch {} finally { setSaving(false); }
   };
 
   const handleEgreso = async () => {
+    const errors = validateEgreso();
+    if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
     setSaving(true);
     try {
       if (editingMovimiento) {
@@ -185,11 +221,12 @@ export default function CajaDetalle() {
         });
         toast.success('Egreso registrado');
       }
+      setFormErrors({});
       setActiveModal(null);
       setEditingMovimiento(null);
       setFormEgreso({ ...defaultFormEgreso });
       reloadMovimientos();
-    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Error'); } finally { setSaving(false); }
+    } catch {} finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
@@ -206,7 +243,7 @@ export default function CajaDetalle() {
       setSelectedMovimiento(null);
       setShowDeleteConfirm(false);
       reloadMovimientos();
-    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Error'); } finally { setSaving(false); }
+    } catch {} finally { setSaving(false); }
   };
 
   const handleEditFromDetail = () => {
@@ -221,11 +258,13 @@ export default function CajaDetalle() {
   };
 
   const handleTransferencia = async () => {
+    const errors = validateTransferencia();
+    if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
     setSaving(true);
     try {
       await transferenciasApi.create({ fecha: formTransferencia.fecha, cajaOrigenId: cajaId, cajaDestinoId: parseInt(formTransferencia.cajaDestinoId), monedaId: parseInt(formTransferencia.monedaId), importe: formTransferencia.importe });
-      toast.success('Transferencia registrada'); setActiveModal(null); setFormTransferencia({ fecha: new Date().toISOString().split('T')[0], cajaDestinoId: '', monedaId: '1', importe: 0 }); reloadMovimientos();
-    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Error'); } finally { setSaving(false); }
+      toast.success('Transferencia registrada'); setActiveModal(null); setFormErrors({}); setFormTransferencia({ fecha: new Date().toISOString().split('T')[0], cajaDestinoId: '', monedaId: '1', importe: 0 }); reloadMovimientos();
+    } catch {} finally { setSaving(false); }
   };
 
   const handleConversion = async () => {
@@ -234,7 +273,7 @@ export default function CajaDetalle() {
       const importeDestino = Math.round(formConversion.importe * formConversion.tipoCambio * 100) / 100;
       await conversionesApi.create({ cajaId, monedaOrigenId: parseInt(formConversion.monedaOrigenId), monedaDestinoId: parseInt(formConversion.monedaDestinoId), tipoCambio: formConversion.tipoCambio, importeOrigen: formConversion.importe, importeDestino });
       toast.success('Conversion registrada'); setActiveModal(null); setFormConversion({ monedaOrigenId: '1', monedaDestinoId: '2', tipoCambio: 0, importe: 0 }); reloadMovimientos();
-    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Error'); } finally { setSaving(false); }
+    } catch { /* server error handled by global interceptor */ } finally { setSaving(false); }
   };
 
   const handleFactura = async () => {
@@ -242,7 +281,7 @@ export default function CajaDetalle() {
     try {
       await facturasApi.create({ fecha: formFactura.fecha, clienteId: parseInt(formFactura.clienteId), importe: formFactura.importe, monedaId: parseInt(formFactura.monedaId), observacion: formFactura.observacion });
       toast.success('Factura creada'); setActiveModal(null); setFormFactura({ fecha: new Date().toISOString().split('T')[0], clienteId: '', importe: 0, monedaId: '1', observacion: '' });
-    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Error'); } finally { setSaving(false); }
+    } catch { /* server error handled by global interceptor */ } finally { setSaving(false); }
   };
 
   const handleFacturaGasto = async () => {
@@ -250,7 +289,7 @@ export default function CajaDetalle() {
     try {
       await facturasGastoApi.create({ fecha: formFacturaGasto.fecha, tipoEgresoId: parseInt(formFacturaGasto.tipoEgresoId), importe: formFacturaGasto.importe, monedaId: parseInt(formFacturaGasto.monedaId), observacion: formFacturaGasto.observacion, fechaVencimiento: formFacturaGasto.fechaVencimiento || undefined });
       toast.success('Factura de gasto creada'); setActiveModal(null); setFormFacturaGasto({ fecha: new Date().toISOString().split('T')[0], tipoEgresoId: '', importe: 0, monedaId: '1', observacion: '', fechaVencimiento: '' });
-    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Error'); } finally { setSaving(false); }
+    } catch { /* server error handled by global interceptor */ } finally { setSaving(false); }
   };
 
   const closeIngresoModal = () => {
@@ -422,11 +461,20 @@ export default function CajaDetalle() {
 
       <Modal open={activeModal === 'ingreso'} onClose={closeIngresoModal} title={editingMovimiento ? 'Editar Ingreso' : 'Registrar Ingreso'}>
         <div className="space-y-4">
-          <Input label="Fecha" type="date" value={formIngreso.fecha} onChange={(e) => setFormIngreso({ ...formIngreso, fecha: e.target.value })} />
-          <Select label="Tipo de Ingreso" value={formIngreso.tipoIngresoId} onChange={(e) => setFormIngreso({ ...formIngreso, tipoIngresoId: e.target.value })} options={tiposIngreso.map((t: any) => ({ value: t.id || t.TipoIngresoId, label: t.nombre || t.TipoIngresoNombre }))} placeholder="Seleccionar tipo" />
+          <div>
+            <Input label="Fecha" type="date" value={formIngreso.fecha} onChange={(e) => { setFormIngreso({ ...formIngreso, fecha: e.target.value }); clearFieldError('fecha'); }} />
+            {formErrors.fecha && <p className="text-sm text-red-500 mt-1">{formErrors.fecha}</p>}
+          </div>
+          <div>
+            <Select label="Tipo de Ingreso" value={formIngreso.tipoIngresoId} onChange={(e) => { setFormIngreso({ ...formIngreso, tipoIngresoId: e.target.value }); clearFieldError('tipoIngresoId'); }} options={tiposIngreso.map((t: any) => ({ value: t.id || t.TipoIngresoId, label: t.nombre || t.TipoIngresoNombre }))} placeholder="Seleccionar tipo" />
+            {formErrors.tipoIngresoId && <p className="text-sm text-red-500 mt-1">{formErrors.tipoIngresoId}</p>}
+          </div>
           <Select label="Cliente (opcional)" value={formIngreso.clienteId} onChange={(e) => setFormIngreso({ ...formIngreso, clienteId: e.target.value })} options={clientes.map((c: any) => ({ value: c.id || c.ClienteId, label: c.nombre || c.ClienteNombre }))} placeholder="Seleccionar cliente" />
           <Select label="Moneda" value={formIngreso.monedaId} onChange={(e) => setFormIngreso({ ...formIngreso, monedaId: e.target.value })} options={monedaOpts} />
-          <MoneyInput label="Importe" value={formIngreso.importe} onChange={(val) => setFormIngreso({ ...formIngreso, importe: val })} />
+          <div>
+            <MoneyInput label="Importe" value={formIngreso.importe} onChange={(val) => { setFormIngreso({ ...formIngreso, importe: val }); clearFieldError('importe'); }} />
+            {formErrors.importe && <p className="text-sm text-red-500 mt-1">{formErrors.importe}</p>}
+          </div>
           <Input label="Observacion" value={formIngreso.observacion} onChange={(e) => setFormIngreso({ ...formIngreso, observacion: e.target.value })} placeholder="Opcional" />
           <div className="flex gap-3 justify-end pt-2">
             <Button variant="secondary" onClick={closeIngresoModal}>Cancelar</Button>
@@ -437,10 +485,19 @@ export default function CajaDetalle() {
 
       <Modal open={activeModal === 'egreso'} onClose={closeEgresoModal} title={editingMovimiento ? 'Editar Egreso' : 'Registrar Egreso'}>
         <div className="space-y-4">
-          <Input label="Fecha" type="date" value={formEgreso.fecha} onChange={(e) => setFormEgreso({ ...formEgreso, fecha: e.target.value })} />
-          <Select label="Tipo de Egreso" value={formEgreso.tipoEgresoId} onChange={(e) => setFormEgreso({ ...formEgreso, tipoEgresoId: e.target.value })} options={tiposEgreso.map((t: any) => ({ value: t.id || t.TipoEgresoId, label: t.nombre || t.TipoEgresoNombre }))} placeholder="Seleccionar tipo" />
+          <div>
+            <Input label="Fecha" type="date" value={formEgreso.fecha} onChange={(e) => { setFormEgreso({ ...formEgreso, fecha: e.target.value }); clearFieldError('fecha'); }} />
+            {formErrors.fecha && <p className="text-sm text-red-500 mt-1">{formErrors.fecha}</p>}
+          </div>
+          <div>
+            <Select label="Tipo de Egreso" value={formEgreso.tipoEgresoId} onChange={(e) => { setFormEgreso({ ...formEgreso, tipoEgresoId: e.target.value }); clearFieldError('tipoEgresoId'); }} options={tiposEgreso.map((t: any) => ({ value: t.id || t.TipoEgresoId, label: t.nombre || t.TipoEgresoNombre }))} placeholder="Seleccionar tipo" />
+            {formErrors.tipoEgresoId && <p className="text-sm text-red-500 mt-1">{formErrors.tipoEgresoId}</p>}
+          </div>
           <Select label="Moneda" value={formEgreso.monedaId} onChange={(e) => setFormEgreso({ ...formEgreso, monedaId: e.target.value })} options={monedaOpts} />
-          <MoneyInput label="Importe" value={formEgreso.importe} onChange={(val) => setFormEgreso({ ...formEgreso, importe: val })} />
+          <div>
+            <MoneyInput label="Importe" value={formEgreso.importe} onChange={(val) => { setFormEgreso({ ...formEgreso, importe: val }); clearFieldError('importe'); }} />
+            {formErrors.importe && <p className="text-sm text-red-500 mt-1">{formErrors.importe}</p>}
+          </div>
           <Input label="Observacion" value={formEgreso.observacion} onChange={(e) => setFormEgreso({ ...formEgreso, observacion: e.target.value })} placeholder="Opcional" />
           <div className="flex gap-3 justify-end pt-2">
             <Button variant="secondary" onClick={closeEgresoModal}>Cancelar</Button>

@@ -27,4 +27,13 @@ export class ReportesController {
   getFacturasPendientes(@TenantId() tenantId: number) {
     return this.reportesService.getFacturasPendientes(tenantId);
   }
+
+  @Get('agrupado-por-tipo')
+  getAgrupadoPorTipo(
+    @TenantId() tenantId: number,
+    @Query('fechaDesde') fechaDesde?: string,
+    @Query('fechaHasta') fechaHasta?: string,
+  ) {
+    return this.reportesService.getAgrupadoPorTipo(tenantId, fechaDesde, fechaHasta);
+  }
 }

@@ -36,4 +36,12 @@ export class ReportesController {
   ) {
     return this.reportesService.getAgrupadoPorTipo(tenantId, fechaDesde, fechaHasta);
   }
+
+  @Get('evolucion-mensual')
+  getEvolucionMensual(
+    @TenantId() tenantId: number,
+    @Query('meses') meses?: number,
+  ) {
+    return this.reportesService.getEvolucionMensual(tenantId, meses ? Number(meses) : 6);
+  }
 }

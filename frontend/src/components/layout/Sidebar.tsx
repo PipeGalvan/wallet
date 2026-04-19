@@ -8,6 +8,7 @@ import { useThemeStore } from '../../store/themeStore';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Inicio' },
+  { to: '/cajas', icon: Wallet, label: 'Cajas' },
   { to: '/ingresos', icon: ArrowDownCircle, label: 'Ingresos' },
   { to: '/egresos', icon: ArrowUpCircle, label: 'Egresos' },
   { to: '/transferencias', icon: ArrowRightLeft, label: 'Transferencias' },

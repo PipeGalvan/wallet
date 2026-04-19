@@ -4,6 +4,7 @@ import AppLayout from './components/layout/AppLayout';
 import Login from './pages/Login';
 import SelectAccount from './pages/SelectAccount';
 import Home from './pages/Home';
+import Cajas from './pages/Cajas';
 import CajaDetalle from './pages/CajaDetalle';
 import Ingresos from './pages/Ingresos';
 import Egresos from './pages/Egresos';
@@ -38,6 +39,7 @@ export default function App() {
         }
       >
         <Route index element={<Home />} />
+        <Route path="cajas" element={<Cajas />} />
         <Route path="cajas/:id" element={<CajaDetalle />} />
         <Route path="ingresos" element={<Ingresos />} />
         <Route path="egresos" element={<Egresos />} />

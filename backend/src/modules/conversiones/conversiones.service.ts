@@ -39,7 +39,8 @@ export class ConversionesService {
 
     const importeDestino = new Decimal(dto.importe).mul(new Decimal(dto.tipoCambio)).toNumber();
     const monedaNombres: Record<number, string> = { 1: 'ARS', 2: 'USD' };
-    const obs = `CONVERSION ${monedaNombres[dto.monedaOrigenId] || dto.monedaOrigenId}->${monedaNombres[dto.monedaDestinoId] || dto.monedaDestinoId} TC:${dto.tipoCambio}`;
+    const tcDisplay = dto.tipoCambioDisplay || dto.tipoCambio;
+    const obs = `CONVERSION ${monedaNombres[dto.monedaOrigenId] || dto.monedaOrigenId}->${monedaNombres[dto.monedaDestinoId] || dto.monedaDestinoId} TC:${tcDisplay}`;
 
     return this.dataSource.transaction(async (manager) => {
       let cajaDiaria = await manager.findOne(CajaDiaria, {

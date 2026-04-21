@@ -21,7 +21,7 @@ import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { formatMoney, formatDate } from '../utils/format';
 import { MONEDA_SYMBOLS } from '../utils/constants';
 import { Movimiento } from '../types/caja';
-import { ArrowLeft, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, RefreshCw, FileText, FileDown, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, RefreshCw, FileText, FileDown, Pencil, Trash2, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type ModalType = 'ingreso' | 'egreso' | 'transferencia' | 'conversion' | 'factura' | 'facturaGasto' | null;
@@ -56,6 +56,9 @@ export default function CajaDetalle() {
   const [formFactura, setFormFactura] = useState({ fecha: new Date().toISOString().split('T')[0], clienteId: '', importe: 0, monedaId: '1', observacion: '' });
   const [formFacturaGasto, setFormFacturaGasto] = useState({ fecha: new Date().toISOString().split('T')[0], tipoEgresoId: '', importe: 0, monedaId: '1', observacion: '', fechaVencimiento: '' });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const [conversiones, setConversiones] = useState<any[]>([]);
+  const [showConversiones, setShowConversiones] = useState(false);
 
   // ──── Validation ────
 
@@ -111,6 +114,7 @@ export default function CajaDetalle() {
       setTiposEgreso(teRes.data || []);
       setClientes(clRes.data || []);
       setCajas(((cRes.data as any)?.data || cRes.data || []) as any[]);
+      loadConversiones();
     } catch {} finally { setLoading(false); }
   };
 
@@ -121,6 +125,15 @@ export default function CajaDetalle() {
       setMovimientos(movData?.data || movData || []);
       const cajaRes = await cajasApi.getById(cajaId);
       setCaja((cajaRes.data as any)?.data || cajaRes.data);
+    } catch {}
+  };
+
+  const loadConversiones = async () => {
+    try {
+      const res = await conversionesApi.getAll({ page: 1, limit: 100 });
+      const convData = (res.data as any)?.data || res.data;
+      const allConversiones = convData?.data || convData || [];
+      setConversiones(allConversiones.filter((c: any) => c.cajaId === cajaId));
     } catch {}
   };
 
@@ -280,8 +293,8 @@ export default function CajaDetalle() {
     try {
       // Backend always does importe × tipoCambio, so invert TC when ARS→USD
       const effectiveTC = conversionIsDirect ? formConversion.tipoCambio : 1 / formConversion.tipoCambio;
-      await conversionesApi.create({ cajaId, monedaOrigenId: parseInt(formConversion.monedaOrigenId), monedaDestinoId: parseInt(formConversion.monedaDestinoId), tipoCambio: effectiveTC, importe: formConversion.importe });
-      toast.success('Conversion registrada'); setActiveModal(null); setFormConversion({ monedaOrigenId: '1', monedaDestinoId: '2', tipoCambio: 0, importe: 0 }); reloadMovimientos();
+      await conversionesApi.create({ cajaId, monedaOrigenId: parseInt(formConversion.monedaOrigenId), monedaDestinoId: parseInt(formConversion.monedaDestinoId), tipoCambio: effectiveTC, importe: formConversion.importe, tipoCambioDisplay: formConversion.tipoCambio });
+      toast.success('Conversion registrada'); setActiveModal(null); setFormConversion({ monedaOrigenId: '1', monedaDestinoId: '2', tipoCambio: 0, importe: 0 }); reloadMovimientos(); loadConversiones();
     } catch { /* server error handled by global interceptor */ } finally { setSaving(false); }
   };
 
@@ -314,6 +327,7 @@ export default function CajaDetalle() {
   };
 
   const monedaOpts = [{ value: 1, label: '$ (ARS)' }, { value: 2, label: 'USD' }];
+  const monedaNombres: Record<number, string> = { 1: 'ARS', 2: 'USD' };
   const otrasCajas = cajas.filter((c: any) => (c.id || c.CajaId) !== cajaId);
 
   const columns = [
@@ -528,20 +542,79 @@ export default function CajaDetalle() {
         </div>
       </Modal>
 
-      <Modal open={activeModal === 'conversion'} onClose={() => setActiveModal(null)} title="Convertir Moneda">
-        <div className="space-y-4">
-          <Select label="Moneda Origen" value={formConversion.monedaOrigenId} onChange={(e) => setFormConversion({ ...formConversion, monedaOrigenId: e.target.value })} options={monedaOpts} />
-          <Select label="Moneda Destino" value={formConversion.monedaDestinoId} onChange={(e) => setFormConversion({ ...formConversion, monedaDestinoId: e.target.value })} options={monedaOpts.filter((m: any) => String(m.value) !== formConversion.monedaOrigenId)} />
-          <MoneyInput label={`Tipo de Cambio (precio de 1 USD en ARS)`} value={formConversion.tipoCambio} onChange={(val) => setFormConversion({ ...formConversion, tipoCambio: val })} />
-          <MoneyInput label="Importe Origen" value={formConversion.importe} onChange={(val) => setFormConversion({ ...formConversion, importe: val })} />
-          {conversionEquivalente > 0 && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">Equivalente: <span className="font-semibold">{formatMoney(conversionEquivalente, conversionSymbol)}</span></p>
-          )}
-          <div className="flex gap-3 justify-end pt-2">
-            <Button variant="secondary" onClick={() => setActiveModal(null)}>Cancelar</Button>
-            <Button variant="secondary" loading={saving} onClick={handleConversion}><RefreshCw size={16} className="mr-1" /> Convertir</Button>
+      <Modal open={activeModal === 'conversion'} onClose={() => { setActiveModal(null); setShowConversiones(false); }} title={showConversiones ? 'Historial de Conversiones' : 'Convertir Moneda'} maxWidth={showConversiones ? 'max-w-2xl' : 'max-w-md'}>
+        {showConversiones ? (
+          <div className="overflow-x-hidden">
+            {conversiones.length === 0 ? (
+              <p className="text-center text-gray-400 dark:text-gray-500 py-4">Sin conversiones registradas</p>
+            ) : (
+              <>
+                <div className="hidden md:block">
+                  <Table<any> columns={[
+                    { key: 'fecha', header: 'Fecha', render: (conv: any) => formatDate(conv.fecha) },
+                    { key: 'moneda', header: 'Conversión', render: (conv: any) => `${monedaNombres[conv.monedaOrigenId] || '?'} → ${monedaNombres[conv.monedaDestinoId] || '?'}` },
+                    { key: 'tipoCambio', header: 'Tipo de Cambio', render: (conv: any) => Number(conv.tipoCambio).toFixed(2) },
+                    { key: 'importeOrigen', header: 'Importe Origen', render: (conv: any) => formatMoney(Number(conv.importeOrigen), MONEDA_SYMBOLS[conv.monedaOrigenId] || '$') },
+                    { key: 'importeDestino', header: 'Importe Destino', render: (conv: any) => formatMoney(Number(conv.importeDestino), MONEDA_SYMBOLS[conv.monedaDestinoId] || '$') },
+                  ]} data={conversiones} />
+                </div>
+                <div className="md:hidden space-y-1 max-h-80 overflow-y-auto">
+                  {conversiones.map((conv: any) => (
+                    <div key={conv.id} className="py-2.5 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(conv.fecha)}</span>
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          {monedaNombres[conv.monedaOrigenId] || '?'} → {monedaNombres[conv.monedaDestinoId] || '?'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-gray-400 dark:text-gray-500">TC: {Number(conv.tipoCambio).toFixed(2)}</span>
+                        <span className="text-sm font-medium">
+                          {formatMoney(Number(conv.importeOrigen), MONEDA_SYMBOLS[conv.monedaOrigenId] || '$')} → {formatMoney(Number(conv.importeDestino), MONEDA_SYMBOLS[conv.monedaDestinoId] || '$')}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="flex justify-end pt-4">
+              <Button variant="secondary" onClick={() => setShowConversiones(false)}>
+                <RefreshCw size={16} className="mr-1" /> Nueva Conversión
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            <Select label="Moneda Origen" value={formConversion.monedaOrigenId} onChange={(e) => {
+              const newOrigen = e.target.value;
+              const newDestino = newOrigen === formConversion.monedaDestinoId
+                ? (newOrigen === '1' ? '2' : '1')
+                : formConversion.monedaDestinoId;
+              setFormConversion({ ...formConversion, monedaOrigenId: newOrigen, monedaDestinoId: newDestino });
+            }} options={monedaOpts} />
+            <Select label="Moneda Destino" value={formConversion.monedaDestinoId} onChange={(e) => setFormConversion({ ...formConversion, monedaDestinoId: e.target.value })} options={monedaOpts.filter((m: any) => String(m.value) !== formConversion.monedaOrigenId)} />
+            <MoneyInput label={`Tipo de Cambio (precio de 1 USD en ARS)`} value={formConversion.tipoCambio} onChange={(val) => setFormConversion({ ...formConversion, tipoCambio: val })} />
+            <MoneyInput label="Importe Origen" value={formConversion.importe} onChange={(val) => setFormConversion({ ...formConversion, importe: val })} />
+            {conversionEquivalente > 0 && (
+              <p className="text-sm text-gray-600 dark:text-gray-400">Equivalente: <span className="font-semibold">{formatMoney(conversionEquivalente, conversionSymbol)}</span></p>
+            )}
+            {conversiones.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowConversiones(true)}
+                className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              >
+                <Clock size={14} />
+                Ver historial de conversiones ({conversiones.length})
+              </button>
+            )}
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="secondary" onClick={() => setActiveModal(null)}>Cancelar</Button>
+              <Button variant="secondary" loading={saving} onClick={handleConversion}><RefreshCw size={16} className="mr-1" /> Convertir</Button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       <Modal open={activeModal === 'factura'} onClose={() => setActiveModal(null)} title="Nueva Factura a Cobrar">

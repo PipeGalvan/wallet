@@ -1,4 +1,4 @@
-import { IsNumber, Min } from 'class-validator';
+import { IsNumber, IsOptional, Min } from 'class-validator';
 
 export class CreateConversionDto {
   @IsNumber()
@@ -17,4 +17,8 @@ export class CreateConversionDto {
   @IsNumber()
   @Min(0.01)
   importe: number;
+
+  @IsOptional()
+  @IsNumber()
+  tipoCambioDisplay?: number;
 }

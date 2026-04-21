@@ -34,7 +34,7 @@ export default function Transferencias() {
     try {
       const [tRes, cRes] = await Promise.all([
         transferenciasApi.getAll({ page: 1, limit: 100 }),
-        cajasApi.getAll(),
+        cajasApi.getAll({ activo: 'true' }),
       ]);
       const tData = tRes.data as any;
       setTransferencias(tData.data?.data || tData.data || []);

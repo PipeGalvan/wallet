@@ -38,6 +38,8 @@ export class ConversionesService {
     }
 
     const importeDestino = new Decimal(dto.importe).mul(new Decimal(dto.tipoCambio)).toNumber();
+    const monedaNombres: Record<number, string> = { 1: 'ARS', 2: 'USD' };
+    const obs = `CONVERSION ${monedaNombres[dto.monedaOrigenId] || dto.monedaOrigenId}->${monedaNombres[dto.monedaDestinoId] || dto.monedaDestinoId} TC:${dto.tipoCambio}`;
 
     return this.dataSource.transaction(async (manager) => {
       let cajaDiaria = await manager.findOne(CajaDiaria, {
@@ -53,7 +55,7 @@ export class ConversionesService {
         fecha: new Date(),
         fechaHora: new Date(),
         tipoEgresoId: 47,
-        observacion: `CONVERSION ${dto.monedaOrigenId}->${dto.monedaDestinoId}`,
+        observacion: obs,
         importe: dto.importe,
         cajaDiariaId: cajaDiaria.id,
         monedaId: dto.monedaOrigenId,
@@ -65,7 +67,7 @@ export class ConversionesService {
         fecha: new Date(),
         fechaHora: new Date(),
         tipoIngresoId: 10,
-        observacion: `CONVERSION ${dto.monedaOrigenId}->${dto.monedaDestinoId}`,
+        observacion: obs,
         importe: importeDestino,
         cajaDiariaId: cajaDiaria.id,
         monedaId: dto.monedaDestinoId,

@@ -105,7 +105,7 @@ export default function CajaDetalle() {
         catalogosApi.getTiposIngreso(),
         catalogosApi.getTiposEgreso(),
         clientesApi.getAll(),
-        cajasApi.getAll(),
+        cajasApi.getAll({ activo: 'true' }),
       ]);
       setTiposIngreso(tiRes.data || []);
       setTiposEgreso(teRes.data || []);
@@ -267,11 +267,20 @@ export default function CajaDetalle() {
     } catch {} finally { setSaving(false); }
   };
 
+  const conversionIsDirect = parseInt(formConversion.monedaOrigenId) === 2; // USD→ARS: directo (×TC)
+  const conversionEquivalente = formConversion.tipoCambio > 0 && formConversion.importe > 0
+    ? conversionIsDirect
+      ? formConversion.importe * formConversion.tipoCambio   // USD→ARS: importe × TC
+      : formConversion.importe / formConversion.tipoCambio   // ARS→USD: importe ÷ TC
+    : 0;
+  const conversionSymbol = MONEDA_SYMBOLS[parseInt(formConversion.monedaDestinoId)] || '$';
+
   const handleConversion = async () => {
     setSaving(true);
     try {
-      const importeDestino = Math.round(formConversion.importe * formConversion.tipoCambio * 100) / 100;
-      await conversionesApi.create({ cajaId, monedaOrigenId: parseInt(formConversion.monedaOrigenId), monedaDestinoId: parseInt(formConversion.monedaDestinoId), tipoCambio: formConversion.tipoCambio, importeOrigen: formConversion.importe, importeDestino });
+      // Backend always does importe × tipoCambio, so invert TC when ARS→USD
+      const effectiveTC = conversionIsDirect ? formConversion.tipoCambio : 1 / formConversion.tipoCambio;
+      await conversionesApi.create({ cajaId, monedaOrigenId: parseInt(formConversion.monedaOrigenId), monedaDestinoId: parseInt(formConversion.monedaDestinoId), tipoCambio: effectiveTC, importe: formConversion.importe });
       toast.success('Conversion registrada'); setActiveModal(null); setFormConversion({ monedaOrigenId: '1', monedaDestinoId: '2', tipoCambio: 0, importe: 0 }); reloadMovimientos();
     } catch { /* server error handled by global interceptor */ } finally { setSaving(false); }
   };
@@ -522,11 +531,11 @@ export default function CajaDetalle() {
       <Modal open={activeModal === 'conversion'} onClose={() => setActiveModal(null)} title="Convertir Moneda">
         <div className="space-y-4">
           <Select label="Moneda Origen" value={formConversion.monedaOrigenId} onChange={(e) => setFormConversion({ ...formConversion, monedaOrigenId: e.target.value })} options={monedaOpts} />
-          <Select label="Moneda Destino" value={formConversion.monedaDestinoId} onChange={(e) => setFormConversion({ ...formConversion, monedaDestinoId: e.target.value })} options={monedaOpts} />
-          <MoneyInput label="Tipo de Cambio" value={formConversion.tipoCambio} onChange={(val) => setFormConversion({ ...formConversion, tipoCambio: val })} />
+          <Select label="Moneda Destino" value={formConversion.monedaDestinoId} onChange={(e) => setFormConversion({ ...formConversion, monedaDestinoId: e.target.value })} options={monedaOpts.filter((m: any) => String(m.value) !== formConversion.monedaOrigenId)} />
+          <MoneyInput label={`Tipo de Cambio (precio de 1 USD en ARS)`} value={formConversion.tipoCambio} onChange={(val) => setFormConversion({ ...formConversion, tipoCambio: val })} />
           <MoneyInput label="Importe Origen" value={formConversion.importe} onChange={(val) => setFormConversion({ ...formConversion, importe: val })} />
-          {formConversion.importe > 0 && formConversion.tipoCambio > 0 && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">Equivalente: <span className="font-semibold">{formatMoney(formConversion.importe * formConversion.tipoCambio)}</span></p>
+          {conversionEquivalente > 0 && (
+            <p className="text-sm text-gray-600 dark:text-gray-400">Equivalente: <span className="font-semibold">{formatMoney(conversionEquivalente, conversionSymbol)}</span></p>
           )}
           <div className="flex gap-3 justify-end pt-2">
             <Button variant="secondary" onClick={() => setActiveModal(null)}>Cancelar</Button>

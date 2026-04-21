@@ -22,15 +22,21 @@ export class ReportesService {
   async getResumen(tenantId: number, fechaDesde?: string, fechaHasta?: string) {
     const ingresoQuery = this.ingresoRepo
       .createQueryBuilder('i')
+      .leftJoin('i.tipoIngreso', 'ti')
       .select('i.MonedaId', 'monedaId')
       .addSelect('COALESCE(SUM(i.IngresoImporte), 0)', 'total')
-      .where('i.IngresoPropietarioId = :tenantId', { tenantId });
+      .where('i.IngresoPropietarioId = :tenantId', { tenantId })
+      .andWhere('(ti.TipoIngresoTransferencia IS NULL OR ti.TipoIngresoTransferencia = 0)')
+      .andWhere('(ti.TipoIngresoCambio IS NULL OR ti.TipoIngresoCambio = 0)');
 
     const egresoQuery = this.egresoRepo
       .createQueryBuilder('e')
+      .leftJoin('e.tipoEgreso', 'te')
       .select('e.MonedaId', 'monedaId')
       .addSelect('COALESCE(SUM(e.EgresoImporte), 0)', 'total')
-      .where('e.EgresoPropietarioId = :tenantId', { tenantId });
+      .where('e.EgresoPropietarioId = :tenantId', { tenantId })
+      .andWhere('(te.TipoEgresoTransferencia IS NULL OR te.TipoEgresoTransferencia = 0)')
+      .andWhere('(te.TipoEgresoCambio IS NULL OR te.TipoEgresoCambio = 0)');
 
     if (fechaDesde) {
       ingresoQuery.andWhere('i.IngresoFecha >= :fechaDesde', { fechaDesde });

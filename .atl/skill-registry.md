@@ -25,7 +25,7 @@
 | `openspec-archive-change` | Finalize and archive a change after implementation | Archive a completed change in the OpenSpec workflow |
 
 ## Project Conventions
-
+# test
 | File | Purpose |
 |------|---------|
 | `ARQUITECTURA.md` | Full architecture documentation: DB schema, API design, folder structure, security model |

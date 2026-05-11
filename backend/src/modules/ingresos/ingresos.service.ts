@@ -94,19 +94,10 @@ export class IngresosService {
   async update(tenantId: number, id: number, dto: UpdateIngresoDto) {
     const ingreso = await this.findOne(tenantId, id);
     if (dto.fecha) ingreso.fecha = dto.fecha as any;
-    if (dto.tipoIngresoId) {
-      ingreso.tipoIngresoId = dto.tipoIngresoId;
-      ingreso.tipoIngreso = { id: dto.tipoIngresoId } as TipoIngreso;
-    }
-    if (dto.clienteId !== undefined) {
-      ingreso.clienteId = dto.clienteId;
-      ingreso.cliente = dto.clienteId ? ({ id: dto.clienteId } as Cliente) : null;
-    }
+    if (dto.tipoIngresoId) ingreso.tipoIngreso = { id: dto.tipoIngresoId } as TipoIngreso;
+    if (dto.clienteId !== undefined) ingreso.cliente = (dto.clienteId ? { id: dto.clienteId } : null) as any;
     if (dto.observacion !== undefined) ingreso.observacion = dto.observacion;
-    if (dto.monedaId) {
-      ingreso.monedaId = dto.monedaId;
-      ingreso.moneda = { id: dto.monedaId } as Moneda;
-    }
+    if (dto.monedaId) ingreso.moneda = { id: dto.monedaId } as Moneda;
     if (dto.importe) ingreso.importe = dto.importe;
     return this.ingresoRepo.save(ingreso);
   }

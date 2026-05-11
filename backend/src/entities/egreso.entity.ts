@@ -16,11 +16,23 @@ export class Egreso {
   @Column({ name: 'EgresoFechaHora', type: 'datetime', nullable: true })
   fechaHora: Date;
 
+  @Column({ name: 'TipoEgresoId', nullable: true })
+  tipoEgresoId: number;
+
   @Column({ name: 'EgresoObservacion', length: 60, nullable: true })
   observacion: string;
 
   @Column({ name: 'EgresoImporte', type: 'decimal', precision: 14, scale: 2, nullable: true })
   importe: number;
+
+  @Column({ name: 'CajaDiariaId', nullable: true })
+  cajaDiariaId: number;
+
+  @Column({ name: 'MonedaId', nullable: true })
+  monedaId: number;
+
+  @Column({ name: 'EgresoPropietarioId', nullable: true })
+  propietarioId: number;
 
   @ManyToOne(() => TipoEgreso)
   @JoinColumn({ name: 'TipoEgresoId' })
@@ -37,6 +49,9 @@ export class Egreso {
   @ManyToOne(() => Propietario, (p) => p.egresos)
   @JoinColumn({ name: 'EgresoPropietarioId' })
   propietario: Propietario;
+
+  @Column({ name: 'MovimientoRecurrenteId', nullable: true })
+  movimientoRecurrenteId: number;
 
   @ManyToOne(() => MovimientoRecurrente)
   @JoinColumn({ name: 'MovimientoRecurrenteId' })

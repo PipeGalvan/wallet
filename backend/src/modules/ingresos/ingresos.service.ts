@@ -3,6 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Raw } from 'typeorm';
 import { Ingreso } from '../../entities/ingreso.entity';
 import { CajaDiaria } from '../../entities/cajadiaria.entity';
+import { TipoIngreso } from '../../entities/tipoingreso.entity';
+import { Cliente } from '../../entities/cliente.entity';
+import { Moneda } from '../../entities/moneda.entity';
 import { CreateIngresoDto } from './dto/create-ingreso.dto';
 import { UpdateIngresoDto } from './dto/update-ingreso.dto';
 
@@ -91,10 +94,19 @@ export class IngresosService {
   async update(tenantId: number, id: number, dto: UpdateIngresoDto) {
     const ingreso = await this.findOne(tenantId, id);
     if (dto.fecha) ingreso.fecha = dto.fecha as any;
-    if (dto.tipoIngresoId) ingreso.tipoIngresoId = dto.tipoIngresoId;
-    if (dto.clienteId !== undefined) ingreso.clienteId = dto.clienteId;
+    if (dto.tipoIngresoId) {
+      ingreso.tipoIngresoId = dto.tipoIngresoId;
+      ingreso.tipoIngreso = { id: dto.tipoIngresoId } as TipoIngreso;
+    }
+    if (dto.clienteId !== undefined) {
+      ingreso.clienteId = dto.clienteId;
+      ingreso.cliente = dto.clienteId ? ({ id: dto.clienteId } as Cliente) : null;
+    }
     if (dto.observacion !== undefined) ingreso.observacion = dto.observacion;
-    if (dto.monedaId) ingreso.monedaId = dto.monedaId;
+    if (dto.monedaId) {
+      ingreso.monedaId = dto.monedaId;
+      ingreso.moneda = { id: dto.monedaId } as Moneda;
+    }
     if (dto.importe) ingreso.importe = dto.importe;
     return this.ingresoRepo.save(ingreso);
   }

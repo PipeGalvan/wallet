@@ -14,9 +14,6 @@ export class Ingreso {
   @Column({ name: 'IngresoFecha', type: 'date', nullable: true })
   fecha: Date;
 
-  @Column({ name: 'TipoIngresoId', nullable: true })
-  tipoIngresoId: number;
-
   @Column({ name: 'IngresoObservacion', length: 60, nullable: true })
   observacion: string;
 
@@ -25,18 +22,6 @@ export class Ingreso {
 
   @Column({ name: 'IngresoFechaHora', type: 'datetime', nullable: true })
   fechaHora: Date;
-
-  @Column({ name: 'ClienteId', nullable: true })
-  clienteId: number;
-
-  @Column({ name: 'CajaDiariaId', nullable: true })
-  cajaDiariaId: number;
-
-  @Column({ name: 'MonedaId', nullable: true })
-  monedaId: number;
-
-  @Column({ name: 'IngresoPropietarioId', nullable: true })
-  propietarioId: number;
 
   @ManyToOne(() => TipoIngreso)
   @JoinColumn({ name: 'TipoIngresoId' })
@@ -57,9 +42,6 @@ export class Ingreso {
   @ManyToOne(() => Propietario, (p) => p.ingresos)
   @JoinColumn({ name: 'IngresoPropietarioId' })
   propietario: Propietario;
-
-  @Column({ name: 'MovimientoRecurrenteId', nullable: true })
-  movimientoRecurrenteId: number;
 
   @ManyToOne(() => MovimientoRecurrente)
   @JoinColumn({ name: 'MovimientoRecurrenteId' })

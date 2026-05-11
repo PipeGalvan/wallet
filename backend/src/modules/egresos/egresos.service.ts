@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Raw } from 'typeorm';
 import { Egreso } from '../../entities/egreso.entity';
 import { CajaDiaria } from '../../entities/cajadiaria.entity';
+import { TipoEgreso } from '../../entities/tipoegreso.entity';
+import { Moneda } from '../../entities/moneda.entity';
 import { CreateEgresoDto } from './dto/create-egreso.dto';
 import { UpdateEgresoDto } from './dto/update-egreso.dto';
 
@@ -89,9 +91,15 @@ export class EgresosService {
   async update(tenantId: number, id: number, dto: UpdateEgresoDto) {
     const egreso = await this.findOne(tenantId, id);
     if (dto.fecha) egreso.fecha = dto.fecha as any;
-    if (dto.tipoEgresoId) egreso.tipoEgresoId = dto.tipoEgresoId;
+    if (dto.tipoEgresoId) {
+      egreso.tipoEgresoId = dto.tipoEgresoId;
+      egreso.tipoEgreso = { id: dto.tipoEgresoId } as TipoEgreso;
+    }
     if (dto.observacion !== undefined) egreso.observacion = dto.observacion;
-    if (dto.monedaId) egreso.monedaId = dto.monedaId;
+    if (dto.monedaId) {
+      egreso.monedaId = dto.monedaId;
+      egreso.moneda = { id: dto.monedaId } as Moneda;
+    }
     if (dto.importe) egreso.importe = dto.importe;
     return this.egresoRepo.save(egreso);
   }

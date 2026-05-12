@@ -138,11 +138,11 @@ export class MovimientosRecurrentesService {
    * - fechaProxima <= today
    * - ocurrenciasTotales IS NULL OR confirmadas < totales
    */
-  async getPendientes(tenantId: number) {
+  async getPendientes(tenantId: number, cajaId?: number) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return this.mrRepo
+    const query = this.mrRepo
       .createQueryBuilder('mr')
       .leftJoinAndSelect('mr.caja', 'caja')
       .leftJoinAndSelect('mr.moneda', 'moneda')
@@ -153,9 +153,13 @@ export class MovimientosRecurrentesService {
       .andWhere('mr.fechaProxima <= :today', { today })
       .andWhere(
         '(mr.ocurrenciasTotales IS NULL OR mr.ocurrenciasConfirmadas < mr.ocurrenciasTotales)',
-      )
-      .orderBy('mr.fechaProxima', 'ASC')
-      .getMany();
+      );
+
+    if (cajaId) {
+      query.andWhere('mr.cajaId = :cajaId', { cajaId });
+    }
+
+    return query.orderBy('mr.fechaProxima', 'ASC').getMany();
   }
 
   /**
@@ -186,6 +190,8 @@ export class MovimientosRecurrentesService {
     const fecha = dto.fecha || today.toISOString().split('T')[0];
     let movement: any;
 
+    const cajaId = dto.cajaId ?? template.cajaId;
+
     if (template.tipo === 'EGRESO') {
       movement = await this.egresosService.create(tenantId, {
         fecha,
@@ -193,7 +199,7 @@ export class MovimientosRecurrentesService {
         observacion: dto.observacion || template.observacion,
         importe: dto.importe,
         monedaId: template.monedaId,
-        cajaId: template.cajaId,
+        cajaId,
         movimientoRecurrenteId: template.id,
       });
     } else {
@@ -204,7 +210,7 @@ export class MovimientosRecurrentesService {
         observacion: dto.observacion || template.observacion,
         importe: dto.importe,
         monedaId: template.monedaId,
-        cajaId: template.cajaId,
+        cajaId,
         movimientoRecurrenteId: template.id,
       });
     }
@@ -232,7 +238,7 @@ export class MovimientosRecurrentesService {
    */
   async confirmarLote(
     tenantId: number,
-    items: Array<{ id: number; importe: number; observacion?: string; fecha?: string }>,
+    items: Array<{ id: number; importe: number; observacion?: string; fecha?: string; cajaId?: number }>,
   ) {
     const results: Array<{
       id: number;
@@ -248,6 +254,7 @@ export class MovimientosRecurrentesService {
           importe: item.importe,
           observacion: item.observacion,
           fecha: item.fecha,
+          cajaId: item.cajaId,
         });
         results.push({
           id: item.id,

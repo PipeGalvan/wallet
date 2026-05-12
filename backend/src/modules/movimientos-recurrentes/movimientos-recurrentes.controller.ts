@@ -39,15 +39,15 @@ export class MovimientosRecurrentesController {
 
   // IMPORTANT: static routes BEFORE :id routes to avoid param conflict
   @Get('pendientes')
-  getPendientes(@TenantId() tenantId: number) {
-    return this.mrService.getPendientes(tenantId);
+  getPendientes(@TenantId() tenantId: number, @Query('cajaId') cajaId?: string) {
+    return this.mrService.getPendientes(tenantId, cajaId ? parseInt(cajaId) : undefined);
   }
 
   // IMPORTANT: static routes BEFORE :id routes to avoid param conflict
   @Post('confirmar-lote')
   confirmarLote(
     @TenantId() tenantId: number,
-    @Body() body: { items: Array<{ id: number; importe: number; observacion?: string; fecha?: string }> },
+    @Body() body: { items: Array<{ id: number; importe: number; observacion?: string; fecha?: string; cajaId?: number }> },
   ) {
     return this.mrService.confirmarLote(tenantId, body.items);
   }

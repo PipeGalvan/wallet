@@ -64,11 +64,19 @@ interface ConfirmFormState {
   importe: number;
   fecha: string;
   observacion: string;
+  cajaId: string;
 }
 
 interface BatchItem {
   template: MovimientoRecurrente;
   importe: number;
+  cajaId: string;
+}
+
+interface BatchItem {
+  template: MovimientoRecurrente;
+  importe: number;
+  cajaId: string;
 }
 
 export default function MovimientosRecurrentes() {
@@ -107,6 +115,7 @@ export default function MovimientosRecurrentes() {
     importe: 0,
     fecha: new Date().toISOString().split('T')[0],
     observacion: '',
+    cajaId: '',
   });
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
 
@@ -336,6 +345,7 @@ export default function MovimientosRecurrentes() {
             : new Date(t.fechaProxima).toISOString().split('T')[0])
         : new Date().toISOString().split('T')[0],
       observacion: '',
+      cajaId: String(t.cajaId),
     });
     setShowConfirmModal(true);
   };
@@ -348,6 +358,7 @@ export default function MovimientosRecurrentes() {
         importe: confirmForm.importe,
         observacion: confirmForm.observacion || undefined,
         fecha: confirmForm.fecha,
+        cajaId: parseInt(confirmForm.cajaId),
       });
       toast.success(
         `${selectedTemplate.tipo === 'INGRESO' ? 'Ingreso' : 'Egreso'} confirmado`,
@@ -368,6 +379,7 @@ export default function MovimientosRecurrentes() {
     const items: BatchItem[] = pendientes.map((t) => ({
       template: t,
       importe: Number(t.montoEstimado),
+      cajaId: String(t.cajaId),
     }));
     setBatchItems(items);
     setShowBatchModal(true);
@@ -380,6 +392,7 @@ export default function MovimientosRecurrentes() {
         items: batchItems.map((bi) => ({
           id: bi.template.id,
           importe: bi.importe,
+          cajaId: parseInt(bi.cajaId),
         })),
       });
       const resData = results.data as any;
@@ -408,6 +421,12 @@ export default function MovimientosRecurrentes() {
   const updateBatchItemImporte = (index: number, importe: number) => {
     setBatchItems((prev) =>
       prev.map((bi, i) => (i === index ? { ...bi, importe } : bi)),
+    );
+  };
+
+  const updateBatchItemCaja = (index: number, cajaId: string) => {
+    setBatchItems((prev) =>
+      prev.map((bi, i) => (i === index ? { ...bi, cajaId } : bi)),
     );
   };
 
@@ -875,7 +894,7 @@ export default function MovimientosRecurrentes() {
                 </p>
               )}
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Caja: {getCajaName(selectedTemplate)} · {getMonedaLabel(selectedTemplate)}
+                Moneda: {getMonedaLabel(selectedTemplate)}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Estimado: {formatMoney(Number(selectedTemplate.montoEstimado), getMonedaSymbol(selectedTemplate))}
@@ -883,6 +902,18 @@ export default function MovimientosRecurrentes() {
             </div>
 
             {/* Editable fields */}
+            <Select
+              label="Caja"
+              value={confirmForm.cajaId}
+              onChange={(e) => setConfirmForm({ ...confirmForm, cajaId: e.target.value })}
+              options={cajas
+                .filter((c: any) => c.activo !== false && c.CajaActivo !== false)
+                .map((c: any) => ({
+                  value: c.id || c.CajaId,
+                  label: c.nombre || c.CajaNombre,
+                }))}
+              placeholder="Seleccionar caja"
+            />
             <MoneyInput
               label="Importe real"
               value={confirmForm.importe}
@@ -963,6 +994,18 @@ export default function MovimientosRecurrentes() {
                     <MoneyInput
                       value={bi.importe}
                       onChange={(val) => updateBatchItemImporte(idx, val)}
+                    />
+                  </div>
+                  <div className="w-36 flex-shrink-0">
+                    <Select
+                      value={bi.cajaId}
+                      onChange={(e) => updateBatchItemCaja(idx, e.target.value)}
+                      options={cajas
+                        .filter((c: any) => c.activo !== false && c.CajaActivo !== false)
+                        .map((c: any) => ({
+                          value: c.id || c.CajaId,
+                          label: c.nombre || c.CajaNombre,
+                        }))}
                     />
                   </div>
                 </div>

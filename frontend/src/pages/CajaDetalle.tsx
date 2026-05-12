@@ -7,6 +7,7 @@ import { transferenciasApi } from '../api/transferencias';
 import { conversionesApi } from '../api/conversiones';
 import { facturasApi } from '../api/facturas';
 import { facturasGastoApi } from '../api/facturas-gasto';
+import { movimientosRecurrentesApi } from '../api/movimientos-recurrentes';
 import { catalogosApi } from '../api/catalogos';
 import { clientesApi } from '../api/clientes';
 import Card from '../components/ui/Card';
@@ -21,7 +22,7 @@ import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { formatMoney, formatDate } from '../utils/format';
 import { MONEDA_SYMBOLS } from '../utils/constants';
 import { Movimiento } from '../types/caja';
-import { ArrowLeft, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, RefreshCw, FileText, FileDown, Pencil, Trash2, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, RefreshCw, FileText, FileDown, Pencil, Trash2, Clock, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type ModalType = 'ingreso' | 'egreso' | 'transferencia' | 'conversion' | 'factura' | 'facturaGasto' | null;
@@ -59,6 +60,7 @@ export default function CajaDetalle() {
 
   const [conversiones, setConversiones] = useState<any[]>([]);
   const [showConversiones, setShowConversiones] = useState(false);
+  const [pendingCount, setPendingCount] = useState<number>(0);
 
   // ──── Validation ────
 
@@ -115,6 +117,7 @@ export default function CajaDetalle() {
       setClientes(clRes.data || []);
       setCajas(((cRes.data as any)?.data || cRes.data || []) as any[]);
       loadConversiones();
+      loadPendientes();
     } catch {} finally { setLoading(false); }
   };
 
@@ -135,6 +138,16 @@ export default function CajaDetalle() {
       const allConversiones = convData?.data || convData || [];
       setConversiones(allConversiones.filter((c: any) => c.cajaId === cajaId));
     } catch {}
+  };
+
+  const loadPendientes = async () => {
+    try {
+      const { data } = await movimientosRecurrentesApi.getPendientes(cajaId);
+      const items = (data as any).data || data;
+      setPendingCount(Array.isArray(items) ? items.length : 0);
+    } catch {
+      setPendingCount(0);
+    }
   };
 
   const openEditIngreso = async (mov: Movimiento) => {
@@ -385,6 +398,24 @@ export default function CajaDetalle() {
           </div>
         </div>
       </div>
+
+      {/* Pendientes recurrentes banner */}
+      {pendingCount > 0 && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-900/30">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} className="text-amber-500" />
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+              Tenés {pendingCount} movimiento{pendingCount !== 1 ? 's' : ''} recurrente{pendingCount !== 1 ? 's' : ''} pendiente{pendingCount !== 1 ? 's' : ''} en esta caja
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/movimientos-recurrentes')}
+            className="whitespace-nowrap rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 transition-colors"
+          >
+            Ver Pendientes
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 mb-6">
         <Button variant="success" onClick={() => { setEditingMovimiento(null); setFormIngreso({ ...defaultFormIngreso }); setActiveModal('ingreso'); }}><ArrowDownCircle size={16} className="mr-1" /> Ingreso</Button>

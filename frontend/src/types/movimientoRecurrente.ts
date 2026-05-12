@@ -45,6 +45,7 @@ export interface ConfirmMovimientoRecurrente {
   importe: number;
   observacion?: string;
   fecha?: string;
+  cajaId?: number;
 }
 
 export interface PendienteItem extends MovimientoRecurrente {
@@ -57,5 +58,6 @@ export interface ConfirmLoteRequest {
     importe: number;
     observacion?: string;
     fecha?: string;
+    cajaId?: number;
   }>;
 }

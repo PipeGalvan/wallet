@@ -22,8 +22,8 @@ export const movimientosRecurrentesApi = {
   delete: (id: number) =>
     api.delete(`/movimientos-recurrentes/${id}`),
 
-  getPendientes: () =>
-    api.get('/movimientos-recurrentes/pendientes'),
+  getPendientes: (cajaId?: number) =>
+    api.get('/movimientos-recurrentes/pendientes', { params: cajaId ? { cajaId } : {} }),
 
   confirmar: (id: number, data: ConfirmMovimientoRecurrente) =>
     api.post(`/movimientos-recurrentes/${id}/confirmar`, data),

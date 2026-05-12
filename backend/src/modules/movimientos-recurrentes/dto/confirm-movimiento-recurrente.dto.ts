@@ -12,4 +12,8 @@ export class ConfirmMovimientoRecurrenteDto {
   @IsOptional()
   @IsDateString()
   fecha?: string;
+
+  @IsOptional()
+  @IsNumber()
+  cajaId?: number;
 }

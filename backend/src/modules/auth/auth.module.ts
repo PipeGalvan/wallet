@@ -8,10 +8,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { SecUser } from '../../entities/secuser.entity';
 import { SecUserPropietario } from '../../entities/secuserpropietario.entity';
 import { Propietario } from '../../entities/propietario.entity';
+import { Caja } from '../../entities/caja.entity';
+import { TipoIngreso } from '../../entities/tipoingreso.entity';
+import { TipoEgreso } from '../../entities/tipoegreso.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SecUser, SecUserPropietario, Propietario]),
+    TypeOrmModule.forFeature([SecUser, SecUserPropietario, Propietario, Caja, TipoIngreso, TipoEgreso]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
   controllers: [AuthController],

@@ -17,12 +17,18 @@ export class CatalogosService {
   ) {}
 
   async findTiposIngreso(tenantId: number, includeInactive = false) {
-    const where: any = { propietarioId: tenantId };
-    if (!includeInactive) (where as any).activo = true;
-    return this.tipoIngresoRepo.find({
-      where,
-      order: { nombre: 'ASC' },
-    });
+    const qb = this.tipoIngresoRepo
+      .createQueryBuilder('ti')
+      .where('ti.propietarioId = :tenantId', { tenantId })
+      .andWhere('(ti.esTransferencia = false OR ti.esTransferencia IS NULL)')
+      .andWhere('(ti.esCambio = false OR ti.esCambio IS NULL)')
+      .orderBy('ti.nombre', 'ASC');
+
+    if (!includeInactive) {
+      qb.andWhere('ti.activo = true');
+    }
+
+    return qb.getMany();
   }
 
   async createTipoIngreso(tenantId: number, nombre: string) {
@@ -39,6 +45,9 @@ export class CatalogosService {
   async updateTipoIngreso(id: number, nombre: string, activo?: boolean) {
     const tipo = await this.tipoIngresoRepo.findOne({ where: { id } });
     if (!tipo) throw new NotFoundException('Tipo de ingreso no encontrado');
+    if (tipo.esTransferencia || tipo.esCambio) {
+      throw new NotFoundException('Tipo de ingreso no encontrado');
+    }
     if (nombre !== undefined) tipo.nombre = nombre;
     if (activo !== undefined) tipo.activo = activo;
     return this.tipoIngresoRepo.save(tipo);
@@ -47,17 +56,26 @@ export class CatalogosService {
   async deleteTipoIngreso(id: number) {
     const tipo = await this.tipoIngresoRepo.findOne({ where: { id } });
     if (!tipo) throw new NotFoundException('Tipo de ingreso no encontrado');
+    if (tipo.esTransferencia || tipo.esCambio) {
+      throw new NotFoundException('Tipo de ingreso no encontrado');
+    }
     tipo.activo = false;
     return this.tipoIngresoRepo.save(tipo);
   }
 
   async findTiposEgreso(tenantId: number, includeInactive = false) {
-    const where: any = { propietarioId: tenantId };
-    if (!includeInactive) (where as any).activo = true;
-    return this.tipoEgresoRepo.find({
-      where,
-      order: { nombre: 'ASC' },
-    });
+    const qb = this.tipoEgresoRepo
+      .createQueryBuilder('te')
+      .where('te.propietarioId = :tenantId', { tenantId })
+      .andWhere('(te.esTransferencia = false OR te.esTransferencia IS NULL)')
+      .andWhere('(te.esCambio = false OR te.esCambio IS NULL)')
+      .orderBy('te.nombre', 'ASC');
+
+    if (!includeInactive) {
+      qb.andWhere('te.activo = true');
+    }
+
+    return qb.getMany();
   }
 
   async createTipoEgreso(tenantId: number, nombre: string) {
@@ -74,6 +92,9 @@ export class CatalogosService {
   async updateTipoEgreso(id: number, nombre: string, activo?: boolean) {
     const tipo = await this.tipoEgresoRepo.findOne({ where: { id } });
     if (!tipo) throw new NotFoundException('Tipo de egreso no encontrado');
+    if (tipo.esTransferencia || tipo.esCambio) {
+      throw new NotFoundException('Tipo de egreso no encontrado');
+    }
     if (nombre !== undefined) tipo.nombre = nombre;
     if (activo !== undefined) tipo.activo = activo;
     return this.tipoEgresoRepo.save(tipo);
@@ -82,6 +103,9 @@ export class CatalogosService {
   async deleteTipoEgreso(id: number) {
     const tipo = await this.tipoEgresoRepo.findOne({ where: { id } });
     if (!tipo) throw new NotFoundException('Tipo de egreso no encontrado');
+    if (tipo.esTransferencia || tipo.esCambio) {
+      throw new NotFoundException('Tipo de egreso no encontrado');
+    }
     tipo.activo = false;
     return this.tipoEgresoRepo.save(tipo);
   }

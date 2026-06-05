@@ -1,16 +1,30 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { SecUser } from '../../entities/secuser.entity';
 import { SecUserPropietario } from '../../entities/secuserpropietario.entity';
 import { Propietario } from '../../entities/propietario.entity';
+import { Caja } from '../../entities/caja.entity';
+import { TipoIngreso } from '../../entities/tipoingreso.entity';
+import { TipoEgreso } from '../../entities/tipoegreso.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SelectAccountDto } from './dto/select-account.dto';
 import { JwtPayload } from '../../common/types';
 import { verifyEncrypt64 } from '../../common/utils/encrypt64';
+
+const SEED_TIPOS_INGRESO = ['Sueldo', 'Venta', 'Otro'];
+const SEED_TIPOS_EGRESO = ['Alquiler', 'Comida', 'Transporte', 'Otro'];
+const SEED_TIPOS_ESPECIALES_INGRESO = [
+  { nombre: 'Transferencia', esTransferencia: true },
+  { nombre: 'Cambio', esCambio: true },
+];
+const SEED_TIPOS_ESPECIALES_EGRESO = [
+  { nombre: 'Transferencia', esTransferencia: true },
+  { nombre: 'Cambio', esCambio: true },
+];
 
 @Injectable()
 export class AuthService {
@@ -22,6 +36,7 @@ export class AuthService {
     @InjectRepository(Propietario)
     private propRepo: Repository<Propietario>,
     private jwtService: JwtService,
+    private dataSource: DataSource,
   ) {}
 
   async login(dto: LoginDto) {
@@ -92,14 +107,113 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    const hashedPassword = await bcrypt.hash(dto.password, 12);
-    const user = this.userRepo.create({
-      username: dto.username,
-      password: hashedPassword,
-      isAdmin: false,
+    const existing = await this.userRepo.findOne({
+      where: { username: dto.username },
     });
-    await this.userRepo.save(user);
-    return { id: user.id, username: user.username };
+    if (existing) {
+      throw new ConflictException('El nombre de usuario ya existe');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 12);
+
+    const propietario = await this.dataSource.transaction(async (manager) => {
+      // 1. SecUser
+      const user = manager.create(SecUser, {
+        username: dto.username,
+        password: hashedPassword,
+        isAdmin: false,
+      });
+      await manager.save(user);
+
+      // 2. Propietario
+      const prop = manager.create(Propietario, {
+        nombre: dto.username,
+      });
+      await manager.save(prop);
+
+      // 3. SecUserPropietario (vinculo)
+      const link = manager.create(SecUserPropietario, {
+        secUserId: user.id,
+        propietarioId: prop.id,
+      });
+      await manager.save(link);
+
+      // 4. Caja default
+      const caja = manager.create(Caja, {
+        nombre: 'Caja Principal',
+        activo: true,
+        propietarioId: prop.id,
+        fecha: new Date(),
+      });
+      await manager.save(caja);
+
+      // 5. TiposIngreso básicos
+      for (const nombre of SEED_TIPOS_INGRESO) {
+        const tipo = manager.create(TipoIngreso, {
+          nombre,
+          activo: true,
+          propietarioId: prop.id,
+          esTransferencia: false,
+          esCambio: false,
+        });
+        await manager.save(tipo);
+      }
+
+      // 6. TiposEgreso básicos
+      for (const nombre of SEED_TIPOS_EGRESO) {
+        const tipo = manager.create(TipoEgreso, {
+          nombre,
+          activo: true,
+          propietarioId: prop.id,
+          esTransferencia: false,
+          esCambio: false,
+        });
+        await manager.save(tipo);
+      }
+
+      // 7. TiposIngreso especiales (Transferencia, Cambio)
+      for (const seed of SEED_TIPOS_ESPECIALES_INGRESO) {
+        const tipo = manager.create(TipoIngreso, {
+          nombre: seed.nombre,
+          activo: true,
+          propietarioId: prop.id,
+          esTransferencia: seed.esTransferencia || false,
+          esCambio: seed.esCambio || false,
+        });
+        await manager.save(tipo);
+      }
+
+      // 8. TiposEgreso especiales (Transferencia, Cambio)
+      for (const seed of SEED_TIPOS_ESPECIALES_EGRESO) {
+        const tipo = manager.create(TipoEgreso, {
+          nombre: seed.nombre,
+          activo: true,
+          propietarioId: prop.id,
+          esTransferencia: seed.esTransferencia || false,
+          esCambio: seed.esCambio || false,
+        });
+        await manager.save(tipo);
+      }
+
+      return { user, prop };
+    });
+
+    // 7. Generar JWT y devolver formato login
+    const payload: JwtPayload = {
+      sub: propietario.user.id,
+      username: propietario.user.username,
+      isAdmin: false,
+    };
+
+    return {
+      token: this.jwtService.sign(payload),
+      user: {
+        id: propietario.user.id,
+        username: propietario.user.username,
+        isAdmin: false,
+      },
+      cuentas: [{ id: propietario.prop.id, nombre: propietario.prop.nombre }],
+    };
   }
 
   async getProfile(userId: number) {

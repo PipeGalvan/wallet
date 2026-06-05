@@ -21,6 +21,34 @@ Plataforma de administracion financiera multitenant con gestion de cajas, movimi
 
 ## Inicio Rapido
 
+### Desarrollo Local
+
+Requiere **Node.js 18+** y **MySQL** corriendo localmente.
+
+```bash
+# 1. MySQL (si no tenés uno local, levantá con Docker)
+docker run -d --name wallet-mysql-local \
+  -p 3307:3306 \
+  -e MYSQL_ROOT_PASSWORD=123456 \
+  -e MYSQL_DATABASE=nuntius \
+  mysql:8.0
+
+# 2. Backend (terminal 1)
+cd backend
+cp .env.example .env   # configurá DB_HOST, DB_PORT, DB_PASSWORD
+npm install
+npm run start:dev       # http://localhost:3000/api/v1
+
+# 3. Frontend (terminal 2)
+cd frontend
+npm install
+npm run dev             # http://localhost:5173
+
+# Acceder: http://localhost:5173
+```
+
+### Produccion (Docker Compose)
+
 ```bash
 # Clonar e iniciar
 docker compose up -d --build

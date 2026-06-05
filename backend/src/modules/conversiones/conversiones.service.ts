@@ -5,6 +5,8 @@ import { ConversionMoneda } from '../../entities/conversionmoneda.entity';
 import { Ingreso } from '../../entities/ingreso.entity';
 import { Egreso } from '../../entities/egreso.entity';
 import { CajaDiaria } from '../../entities/cajadiaria.entity';
+import { TipoIngreso } from '../../entities/tipoingreso.entity';
+import { TipoEgreso } from '../../entities/tipoegreso.entity';
 import { CreateConversionDto } from './dto/create-conversion.dto';
 import Decimal from 'decimal.js';
 
@@ -19,6 +21,10 @@ export class ConversionesService {
     private egresoRepo: Repository<Egreso>,
     @InjectRepository(CajaDiaria)
     private cajaDiariaRepo: Repository<CajaDiaria>,
+    @InjectRepository(TipoIngreso)
+    private tipoIngresoRepo: Repository<TipoIngreso>,
+    @InjectRepository(TipoEgreso)
+    private tipoEgresoRepo: Repository<TipoEgreso>,
     private dataSource: DataSource,
   ) {}
 
@@ -52,10 +58,17 @@ export class ConversionesService {
         cajaDiaria = await manager.save(cajaDiaria);
       }
 
+      const tipoEgresoCambio = await manager.findOne(TipoEgreso, {
+        where: { propietarioId: tenantId, esCambio: true },
+      });
+      const tipoIngresoCambio = await manager.findOne(TipoIngreso, {
+        where: { propietarioId: tenantId, esCambio: true },
+      });
+
       const egreso = manager.create(Egreso, {
         fecha: new Date(),
         fechaHora: new Date(),
-        tipoEgresoId: 47,
+        tipoEgresoId: tipoEgresoCambio?.id,
         observacion: obs,
         importe: dto.importe,
         cajaDiariaId: cajaDiaria.id,
@@ -67,7 +80,7 @@ export class ConversionesService {
       const ingreso = manager.create(Ingreso, {
         fecha: new Date(),
         fechaHora: new Date(),
-        tipoIngresoId: 10,
+        tipoIngresoId: tipoIngresoCambio?.id,
         observacion: obs,
         importe: importeDestino,
         cajaDiariaId: cajaDiaria.id,

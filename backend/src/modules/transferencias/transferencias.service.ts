@@ -5,6 +5,8 @@ import { Transferencia } from '../../entities/transferencia.entity';
 import { CajaDiaria } from '../../entities/cajadiaria.entity';
 import { Ingreso } from '../../entities/ingreso.entity';
 import { Egreso } from '../../entities/egreso.entity';
+import { TipoIngreso } from '../../entities/tipoingreso.entity';
+import { TipoEgreso } from '../../entities/tipoegreso.entity';
 import { CreateTransferenciaDto } from './dto/create-transferencia.dto';
 
 @Injectable()
@@ -14,6 +16,10 @@ export class TransferenciasService {
     private transferenciaRepo: Repository<Transferencia>,
     @InjectRepository(CajaDiaria)
     private cajaDiariaRepo: Repository<CajaDiaria>,
+    @InjectRepository(TipoIngreso)
+    private tipoIngresoRepo: Repository<TipoIngreso>,
+    @InjectRepository(TipoEgreso)
+    private tipoEgresoRepo: Repository<TipoEgreso>,
     private dataSource: DataSource,
   ) {}
 
@@ -50,10 +56,17 @@ export class TransferenciasService {
       const origenCD = await this.getOrCreateCajaDiaria(manager, dto.cajaOrigenId);
       const destinoCD = await this.getOrCreateCajaDiaria(manager, dto.cajaDestinoId);
 
+      const tipoEgresoTransferencia = await manager.findOne(TipoEgreso, {
+        where: { propietarioId: tenantId, esTransferencia: true },
+      });
+      const tipoIngresoTransferencia = await manager.findOne(TipoIngreso, {
+        where: { propietarioId: tenantId, esTransferencia: true },
+      });
+
       const egreso = manager.create(Egreso, {
         fecha: dto.fecha as any,
         fechaHora: new Date(),
-        tipoEgresoId: 24,
+        tipoEgresoId: tipoEgresoTransferencia?.id,
         observacion: 'TRANSFERENCIA',
         importe: dto.importe,
         cajaDiariaId: origenCD.id,
@@ -65,7 +78,7 @@ export class TransferenciasService {
       const ingreso = manager.create(Ingreso, {
         fecha: dto.fecha as any,
         fechaHora: new Date(),
-        tipoIngresoId: 5,
+        tipoIngresoId: tipoIngresoTransferencia?.id,
         observacion: 'TRANSFERENCIA',
         importe: dto.importe,
         cajaDiariaId: destinoCD.id,

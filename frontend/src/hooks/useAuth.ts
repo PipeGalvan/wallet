@@ -23,6 +23,26 @@ export function useAuth() {
     }
   };
 
+  const register = async (username: string, password: string) => {
+    try {
+      const { data } = await authApi.register({ username, password });
+      const responseData = data.data || data;
+      setAuth(responseData.token, responseData.user, responseData.cuentas);
+
+      if (responseData.cuentas.length === 1) {
+        await selectAccount(responseData.cuentas[0].id, responseData.cuentas[0].nombre, responseData.token);
+      } else {
+        navigate('/select-account');
+      }
+    } catch (err: any) {
+      toast.error(
+        err.response?.status === 409
+          ? 'El nombre de usuario ya existe'
+          : 'Error al crear la cuenta',
+      );
+    }
+  };
+
   const selectAccount = async (propietarioId: number, nombre?: string, _existingToken?: string) => {
     try {
       const { data } = await authApi.selectAccount(propietarioId);
@@ -48,6 +68,7 @@ export function useAuth() {
     isAuthenticated: !!token,
     hasTenant: !!tenantId,
     login,
+    register,
     selectAccount,
     logout: handleLogout,
   };

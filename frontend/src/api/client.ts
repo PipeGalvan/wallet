@@ -19,8 +19,11 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
+      const isLoginRequest = error.config?.url?.includes('/auth/login');
+      if (!isLoginRequest) {
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+      }
     } else if (error.response?.status >= 500) {
       // Server errors: always show global toast (these are unexpected)
       const msg =

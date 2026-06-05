@@ -19,7 +19,7 @@ export function useAuth() {
         navigate('/select-account');
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.error?.message || 'Error al iniciar sesion');
+      toast.error('Usuario o contraseña incorrectos');
     }
   };
 

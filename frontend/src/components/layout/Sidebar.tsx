@@ -8,18 +8,18 @@ import { useThemeStore } from '../../store/themeStore';
 
 const navItems = [
   { to: '/app', icon: Home, label: 'Inicio' },
-  { to: '/cajas', icon: Wallet, label: 'Cajas' },
-  { to: '/ingresos', icon: ArrowDownCircle, label: 'Ingresos' },
-  { to: '/egresos', icon: ArrowUpCircle, label: 'Egresos' },
-  { to: '/transferencias', icon: ArrowRightLeft, label: 'Transferencias' },
-  { to: '/movimientos-recurrentes', icon: Repeat, label: 'Recurrentes' },
-  { to: '/clientes', icon: Users, label: 'Clientes' },
-  { to: '/facturas', icon: FileText, label: 'Facturas a Cobrar' },
-  { to: '/facturas-gasto', icon: FileDown, label: 'Facturas a Pagar' },
-  { to: '/planilla-gastos', icon: ClipboardList, label: 'Planilla Gastos' },
-  { to: '/planilla-cobros', icon: ClipboardCheck, label: 'Planilla Cobros' },
-  { to: '/informes', icon: BarChart3, label: 'Informes' },
-  { to: '/configuracion', icon: Settings, label: 'Configuracion' },
+  { to: '/app/cajas', icon: Wallet, label: 'Cajas' },
+  { to: '/app/ingresos', icon: ArrowDownCircle, label: 'Ingresos' },
+  { to: '/app/egresos', icon: ArrowUpCircle, label: 'Egresos' },
+  { to: '/app/transferencias', icon: ArrowRightLeft, label: 'Transferencias' },
+  { to: '/app/movimientos-recurrentes', icon: Repeat, label: 'Recurrentes' },
+  { to: '/app/clientes', icon: Users, label: 'Clientes' },
+  { to: '/app/facturas', icon: FileText, label: 'Facturas a Cobrar' },
+  { to: '/app/facturas-gasto', icon: FileDown, label: 'Facturas a Pagar' },
+  { to: '/app/planilla-gastos', icon: ClipboardList, label: 'Planilla Gastos' },
+  { to: '/app/planilla-cobros', icon: ClipboardCheck, label: 'Planilla Cobros' },
+  { to: '/app/informes', icon: BarChart3, label: 'Informes' },
+  { to: '/app/configuracion', icon: Settings, label: 'Configuracion' },
 ];
 
 interface SidebarProps {

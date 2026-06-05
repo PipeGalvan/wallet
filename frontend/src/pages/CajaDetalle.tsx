@@ -409,7 +409,7 @@ export default function CajaDetalle() {
             </p>
           </div>
           <button
-            onClick={() => navigate('/movimientos-recurrentes')}
+            onClick={() => navigate('/app/movimientos-recurrentes')}
             className="whitespace-nowrap rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 transition-colors"
           >
             Ver Pendientes

@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
-  Home, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Repeat, Users, FileText, FileDown,
-  ClipboardList, ClipboardCheck, BarChart3, Settings, LogOut, Wallet,
+  Home, ArrowDownCircle, ArrowUpCircle, Repeat, Users,
+  BarChart3, Settings, LogOut, Wallet,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useThemeStore } from '../../store/themeStore';
@@ -11,15 +11,16 @@ const navItems = [
   { to: '/app/cajas', icon: Wallet, label: 'Cajas' },
   { to: '/app/ingresos', icon: ArrowDownCircle, label: 'Ingresos' },
   { to: '/app/egresos', icon: ArrowUpCircle, label: 'Egresos' },
-  { to: '/app/transferencias', icon: ArrowRightLeft, label: 'Transferencias' },
   { to: '/app/movimientos-recurrentes', icon: Repeat, label: 'Recurrentes' },
   { to: '/app/clientes', icon: Users, label: 'Clientes' },
-  { to: '/app/facturas', icon: FileText, label: 'Facturas a Cobrar' },
-  { to: '/app/facturas-gasto', icon: FileDown, label: 'Facturas a Pagar' },
-  { to: '/app/planilla-gastos', icon: ClipboardList, label: 'Planilla Gastos' },
-  { to: '/app/planilla-cobros', icon: ClipboardCheck, label: 'Planilla Cobros' },
   { to: '/app/informes', icon: BarChart3, label: 'Informes' },
   { to: '/app/configuracion', icon: Settings, label: 'Configuracion' },
+  // Ocultas temporalmente:
+  // { to: '/app/transferencias', icon: ArrowRightLeft, label: 'Transferencias' },
+  // { to: '/app/facturas', icon: FileText, label: 'Facturas a Cobrar' },
+  // { to: '/app/facturas-gasto', icon: FileDown, label: 'Facturas a Pagar' },
+  // { to: '/app/planilla-gastos', icon: ClipboardList, label: 'Planilla Gastos' },
+  // { to: '/app/planilla-cobros', icon: ClipboardCheck, label: 'Planilla Cobros' },
 ];
 
 interface SidebarProps {

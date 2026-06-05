@@ -120,7 +120,7 @@ export default function Cajas() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {cajas.map((caja) => (
-            <Card key={caja.id} onClick={() => navigate(`/cajas/${caja.id}`)}>
+            <Card key={caja.id} onClick={() => navigate(`/app/cajas/${caja.id}`)}>
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">{caja.nombre}</h3>
               {caja.saldos && caja.saldos.length > 0 ? (
                 <div className="space-y-1">

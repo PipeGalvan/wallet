@@ -339,11 +339,7 @@ export default function MovimientosRecurrentes() {
     setSelectedTemplate(t);
     setConfirmForm({
       importe: Number(t.montoEstimado),
-      fecha: t.fechaProxima
-        ? (typeof t.fechaProxima === 'string'
-            ? t.fechaProxima.split('T')[0]
-            : new Date(t.fechaProxima).toISOString().split('T')[0])
-        : new Date().toISOString().split('T')[0],
+      fecha: new Date().toISOString().split('T')[0],
       observacion: '',
       cajaId: String(t.cajaId),
     });

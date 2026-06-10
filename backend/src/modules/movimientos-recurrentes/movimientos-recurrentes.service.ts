@@ -55,15 +55,11 @@ export class MovimientosRecurrentesService {
 
   async create(tenantId: number, dto: CreateMovimientoRecurrenteDto) {
     const fechaInicio = new Date(dto.fechaInicio);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
-    let fechaProxima: Date;
-    if (fechaInicio >= today) {
-      fechaProxima = fechaInicio;
-    } else {
-      fechaProxima = this.calcularProximaFecha(dto.diaDelMes, today);
-    }
+    // First occurrence is always at fechaInicio — the user's declared start date.
+    // After confirming the first occurrence, confirmar() will advance fechaProxima
+    // to the next month using calcularProximaFecha().
+    const fechaProxima = fechaInicio;
 
     const template = this.mrRepo.create();
     template.tipo = dto.tipo;

@@ -11,6 +11,7 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Spinner from '../components/ui/Spinner';
 import Pagination from '../components/ui/Pagination';
+import MoneyInput from '../components/shared/MoneyInput';
 import { formatMoney, formatDate } from '../utils/format';
 import { MONEDA_SYMBOLS } from '../utils/constants';
 import { Plus, X } from 'lucide-react';
@@ -42,7 +43,7 @@ export default function Ingresos() {
     clienteId: '',
     observacion: '',
     monedaId: '1',
-    importe: '',
+    importe: 0,
     cajaId: '',
   });
 
@@ -100,7 +101,7 @@ export default function Ingresos() {
     const errors: Record<string, string> = {};
     if (!form.tipoIngresoId) errors.tipoIngresoId = 'Seleccioná un tipo de ingreso';
     if (!form.cajaId) errors.cajaId = 'Seleccioná una caja';
-    if (!form.importe || parseFloat(form.importe) <= 0) errors.importe = 'Ingresá un importe válido';
+    if (!form.importe || form.importe <= 0) errors.importe = 'Ingresá un importe válido';
     if (!form.fecha) errors.fecha = 'Seleccioná una fecha';
     if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
 
@@ -112,13 +113,13 @@ export default function Ingresos() {
         clienteId: form.clienteId ? parseInt(form.clienteId) : undefined,
         observacion: form.observacion,
         monedaId: parseInt(form.monedaId),
-        importe: parseFloat(form.importe),
+        importe: form.importe,
         cajaId: parseInt(form.cajaId),
       });
       toast.success('Ingreso registrado');
       setShowModal(false);
       setFormErrors({});
-      setForm({ fecha: new Date().toISOString().split('T')[0], tipoIngresoId: '', clienteId: '', observacion: '', monedaId: '1', importe: '', cajaId: '' });
+      setForm({ fecha: new Date().toISOString().split('T')[0], tipoIngresoId: '', clienteId: '', observacion: '', monedaId: '1', importe: 0, cajaId: '' });
       loadData();
     } catch {
       // server error handled by global interceptor
@@ -243,7 +244,7 @@ export default function Ingresos() {
             options={[{ value: 1, label: '$ (ARS)' }, { value: 2, label: 'USD' }]}
           />
           <div>
-            <Input label="Importe" type="number" step="0.01" value={form.importe} onChange={(e) => { setForm({ ...form, importe: e.target.value }); clearFieldError('importe'); }} placeholder="0.00" />
+            <MoneyInput label="Importe" value={form.importe} onChange={(val) => { setForm({ ...form, importe: val }); clearFieldError('importe'); }} />
             {formErrors.importe && <p className="text-sm text-red-500 mt-1">{formErrors.importe}</p>}
           </div>
           <Input label="Observacion" value={form.observacion} onChange={(e) => setForm({ ...form, observacion: e.target.value })} placeholder="Observacion (opcional)" />

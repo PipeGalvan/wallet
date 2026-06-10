@@ -8,6 +8,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Spinner from '../components/ui/Spinner';
+import MoneyInput from '../components/shared/MoneyInput';
 import { formatMoney, formatDate } from '../utils/format';
 import { MONEDA_SYMBOLS } from '../utils/constants';
 import { Plus, ArrowRightLeft } from 'lucide-react';
@@ -25,7 +26,7 @@ export default function Transferencias() {
     cajaOrigenId: '',
     cajaDestinoId: '',
     monedaId: '1',
-    importe: '',
+    importe: 0,
   });
 
   useEffect(() => { loadData(); }, []);
@@ -54,11 +55,11 @@ export default function Transferencias() {
         cajaOrigenId: parseInt(form.cajaOrigenId),
         cajaDestinoId: parseInt(form.cajaDestinoId),
         monedaId: parseInt(form.monedaId),
-        importe: parseFloat(form.importe),
+        importe: form.importe,
       });
       toast.success('Transferencia registrada');
       setShowModal(false);
-      setForm({ fecha: new Date().toISOString().split('T')[0], cajaOrigenId: '', cajaDestinoId: '', monedaId: '1', importe: '' });
+      setForm({ fecha: new Date().toISOString().split('T')[0], cajaOrigenId: '', cajaDestinoId: '', monedaId: '1', importe: 0 });
       loadData();
     } catch (err: any) {
       toast.error(err.response?.data?.error?.message || 'Error al registrar transferencia');
@@ -98,7 +99,7 @@ export default function Transferencias() {
             options={cajas.map((c: any) => ({ value: c.id || c.CajaId, label: c.nombre || c.CajaNombre }))} placeholder="Seleccionar caja destino" />
           <Select label="Moneda" value={form.monedaId} onChange={(e) => setForm({ ...form, monedaId: e.target.value })}
             options={[{ value: 1, label: '$ (ARS)' }, { value: 2, label: 'USD' }]} />
-          <Input label="Importe" type="number" step="0.01" value={form.importe} onChange={(e) => setForm({ ...form, importe: e.target.value })} placeholder="0.00" />
+          <MoneyInput label="Importe" value={form.importe} onChange={(val) => setForm({ ...form, importe: val })} />
           <div className="flex gap-3 justify-end pt-2">
             <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
             <Button variant="success" loading={saving} onClick={handleCreate}>

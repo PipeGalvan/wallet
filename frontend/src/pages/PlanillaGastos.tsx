@@ -9,6 +9,7 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Badge from '../components/ui/Badge';
 import Spinner from '../components/ui/Spinner';
+import MoneyInput from '../components/shared/MoneyInput';
 import { formatMoney } from '../utils/format';
 import { MONEDA_SYMBOLS } from '../utils/constants';
 import { Plus, Eye, DollarSign, ArrowLeft } from 'lucide-react';
@@ -27,7 +28,7 @@ export default function PlanillaGastos() {
   const [cajas, setCajas] = useState<any[]>([]);
 
   const [createForm, setCreateForm] = useState({ mes: String(new Date().getMonth() + 1), anio: String(new Date().getFullYear()) });
-  const [itemForm, setItemForm] = useState({ tipoEgresoId: '', importe: '', monedaId: '1' });
+  const [itemForm, setItemForm] = useState({ tipoEgresoId: '', importe: 0, monedaId: '1' });
   const [pagarForm, setPagarForm] = useState({ cajaId: '' });
 
   useEffect(() => { loadData(); }, []);
@@ -63,12 +64,12 @@ export default function PlanillaGastos() {
     try {
       await planillasGastoApi.addItem(selectedPlanilla.PlanillaGastosId || selectedPlanilla.id, {
         tipoEgresoId: parseInt(itemForm.tipoEgresoId),
-        importe: parseFloat(itemForm.importe),
+        importe: itemForm.importe,
         monedaId: parseInt(itemForm.monedaId),
       });
       toast.success('Item agregado');
       setShowAddItem(false);
-      setItemForm({ tipoEgresoId: '', importe: '', monedaId: '1' });
+      setItemForm({ tipoEgresoId: '', importe: 0, monedaId: '1' });
       loadPlanillaDetail(selectedPlanilla.PlanillaGastosId || selectedPlanilla.id);
     } catch (err: any) {
       toast.error(err.response?.data?.error?.message || 'Error al agregar item');
@@ -173,7 +174,7 @@ export default function PlanillaGastos() {
               options={tiposEgreso.map((t: any) => ({ value: t.id || t.TipoEgresoId, label: t.nombre || t.TipoEgresoNombre }))} placeholder="Seleccionar tipo" />
             <Select label="Moneda" value={itemForm.monedaId} onChange={(e) => setItemForm({ ...itemForm, monedaId: e.target.value })}
               options={[{ value: 1, label: '$ (ARS)' }, { value: 2, label: 'USD' }]} />
-            <Input label="Importe" type="number" step="0.01" value={itemForm.importe} onChange={(e) => setItemForm({ ...itemForm, importe: e.target.value })} placeholder="0.00" />
+            <MoneyInput label="Importe" value={itemForm.importe} onChange={(val) => setItemForm({ ...itemForm, importe: val })} />
             <div className="flex gap-3 justify-end pt-2">
               <Button variant="secondary" onClick={() => setShowAddItem(false)}>Cancelar</Button>
               <Button loading={saving} onClick={handleAddItem}>Agregar</Button>

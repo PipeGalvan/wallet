@@ -10,6 +10,7 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Badge from '../components/ui/Badge';
 import Spinner from '../components/ui/Spinner';
+import MoneyInput from '../components/shared/MoneyInput';
 import { formatMoney, formatDate } from '../utils/format';
 import { MONEDA_SYMBOLS } from '../utils/constants';
 import { Plus, DollarSign } from 'lucide-react';
@@ -28,14 +29,14 @@ export default function FacturasGasto() {
   const [createForm, setCreateForm] = useState({
     fecha: new Date().toISOString().split('T')[0],
     tipoEgresoId: '',
-    importe: '',
+    importe: 0,
     monedaId: '1',
     observacion: '',
     fechaVencimiento: '',
   });
 
   const [pagarForm, setPagarForm] = useState({
-    importe: '',
+    importe: 0,
     cajaId: '',
     monedaId: '1',
   });
@@ -62,7 +63,7 @@ export default function FacturasGasto() {
       await facturasGastoApi.create({
         fecha: createForm.fecha,
         tipoEgresoId: parseInt(createForm.tipoEgresoId),
-        importe: parseFloat(createForm.importe),
+        importe: createForm.importe,
         monedaId: parseInt(createForm.monedaId),
         observacion: createForm.observacion,
         fechaVencimiento: createForm.fechaVencimiento || undefined,
@@ -81,13 +82,13 @@ export default function FacturasGasto() {
     setSaving(true);
     try {
       await facturasGastoApi.pagar(selectedFactura.FacturaGastoId || selectedFactura.id, {
-        importe: parseFloat(pagarForm.importe),
+        importe: pagarForm.importe,
         cajaId: parseInt(pagarForm.cajaId),
         monedaId: parseInt(pagarForm.monedaId),
       });
       toast.success('Pago registrado');
       setShowPagar(false);
-      setPagarForm({ importe: '', cajaId: '', monedaId: '1' });
+      setPagarForm({ importe: 0, cajaId: '', monedaId: '1' });
       setSelectedFactura(null);
       loadData();
     } catch (err: any) {
@@ -98,12 +99,12 @@ export default function FacturasGasto() {
   const openPagar = (factura: any) => {
     setSelectedFactura(factura);
     const saldo = Number(factura.FacturaGastoSaldo || factura.saldo || 0);
-    setPagarForm({ importe: saldo.toString(), cajaId: '', monedaId: String(factura.MonedaId || factura.monedaId || 1) });
+    setPagarForm({ importe: saldo, cajaId: '', monedaId: String(factura.MonedaId || factura.monedaId || 1) });
     setShowPagar(true);
   };
 
   const resetCreateForm = () => {
-    setCreateForm({ fecha: new Date().toISOString().split('T')[0], tipoEgresoId: '', importe: '', monedaId: '1', observacion: '', fechaVencimiento: '' });
+    setCreateForm({ fecha: new Date().toISOString().split('T')[0], tipoEgresoId: '', importe: 0, monedaId: '1', observacion: '', fechaVencimiento: '' });
   };
 
   const columns = [
@@ -161,7 +162,7 @@ export default function FacturasGasto() {
             options={tiposEgreso.map((t: any) => ({ value: t.id || t.TipoEgresoId, label: t.nombre || t.TipoEgresoNombre }))} placeholder="Seleccionar tipo" />
           <Select label="Moneda" value={createForm.monedaId} onChange={(e) => setCreateForm({ ...createForm, monedaId: e.target.value })}
             options={[{ value: 1, label: '$ (ARS)' }, { value: 2, label: 'USD' }]} />
-          <Input label="Importe" type="number" step="0.01" value={createForm.importe} onChange={(e) => setCreateForm({ ...createForm, importe: e.target.value })} placeholder="0.00" />
+          <MoneyInput label="Importe" value={createForm.importe} onChange={(val) => setCreateForm({ ...createForm, importe: val })} />
           <Input label="Fecha Vencimiento" type="date" value={createForm.fechaVencimiento} onChange={(e) => setCreateForm({ ...createForm, fechaVencimiento: e.target.value })} />
           <Input label="Observacion" value={createForm.observacion} onChange={(e) => setCreateForm({ ...createForm, observacion: e.target.value })} placeholder="Observacion (opcional)" />
           <div className="flex gap-3 justify-end pt-2">
@@ -177,7 +178,7 @@ export default function FacturasGasto() {
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
               <p className="text-sm text-gray-600 dark:text-gray-300">Saldo pendiente: <span className="font-semibold">{formatMoney(Number(selectedFactura.FacturaGastoSaldo || selectedFactura.saldo), MONEDA_SYMBOLS[selectedFactura.MonedaId || selectedFactura.monedaId] || '$')}</span></p>
             </div>
-            <Input label="Monto a pagar" type="number" step="0.01" value={pagarForm.importe} onChange={(e) => setPagarForm({ ...pagarForm, importe: e.target.value })} />
+            <MoneyInput label="Monto a pagar" value={pagarForm.importe} onChange={(val) => setPagarForm({ ...pagarForm, importe: val })} />
             <Select label="Caja" value={pagarForm.cajaId} onChange={(e) => setPagarForm({ ...pagarForm, cajaId: e.target.value })}
               options={cajas.map((c: any) => ({ value: c.id || c.CajaId, label: c.nombre || c.CajaNombre }))} placeholder="Seleccionar caja" />
             <div className="flex gap-3 justify-end pt-2">

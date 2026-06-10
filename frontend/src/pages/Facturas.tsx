@@ -10,6 +10,7 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Badge from '../components/ui/Badge';
 import Spinner from '../components/ui/Spinner';
+import MoneyInput from '../components/shared/MoneyInput';
 import { formatMoney, formatDate } from '../utils/format';
 import { MONEDA_SYMBOLS } from '../utils/constants';
 import { Plus, DollarSign } from 'lucide-react';
@@ -28,13 +29,13 @@ export default function Facturas() {
   const [createForm, setCreateForm] = useState({
     fecha: new Date().toISOString().split('T')[0],
     clienteId: '',
-    importe: '',
+    importe: 0,
     monedaId: '1',
     observacion: '',
   });
 
   const [cobrarForm, setCobrarForm] = useState({
-    importe: '',
+    importe: 0,
     cajaId: '',
     monedaId: '1',
   });
@@ -61,7 +62,7 @@ export default function Facturas() {
       await facturasApi.create({
         fecha: createForm.fecha,
         clienteId: parseInt(createForm.clienteId),
-        importe: parseFloat(createForm.importe),
+        importe: createForm.importe,
         monedaId: parseInt(createForm.monedaId),
         observacion: createForm.observacion,
       });
@@ -79,13 +80,13 @@ export default function Facturas() {
     setSaving(true);
     try {
       await facturasApi.cobrar(selectedFactura.FacturaId || selectedFactura.id, {
-        importe: parseFloat(cobrarForm.importe),
+        importe: cobrarForm.importe,
         cajaId: parseInt(cobrarForm.cajaId),
         monedaId: parseInt(cobrarForm.monedaId),
       });
       toast.success('Cobro registrado');
       setShowCobrar(false);
-      setCobrarForm({ importe: '', cajaId: '', monedaId: '1' });
+      setCobrarForm({ importe: 0, cajaId: '', monedaId: '1' });
       setSelectedFactura(null);
       loadData();
     } catch (err: any) {
@@ -96,12 +97,12 @@ export default function Facturas() {
   const openCobrar = (factura: any) => {
     setSelectedFactura(factura);
     const saldo = Number(factura.FacturaSaldo || factura.saldo || 0);
-    setCobrarForm({ importe: saldo.toString(), cajaId: '', monedaId: String(factura.MonedaId || factura.monedaId || 1) });
+    setCobrarForm({ importe: saldo, cajaId: '', monedaId: String(factura.MonedaId || factura.monedaId || 1) });
     setShowCobrar(true);
   };
 
   const resetCreateForm = () => {
-    setCreateForm({ fecha: new Date().toISOString().split('T')[0], clienteId: '', importe: '', monedaId: '1', observacion: '' });
+    setCreateForm({ fecha: new Date().toISOString().split('T')[0], clienteId: '', importe: 0, monedaId: '1', observacion: '' });
   };
 
   const columns = [
@@ -155,7 +156,7 @@ export default function Facturas() {
             options={clientes.map((c: any) => ({ value: c.id || c.ClienteId, label: c.nombre || c.ClienteNombre }))} placeholder="Seleccionar cliente" />
           <Select label="Moneda" value={createForm.monedaId} onChange={(e) => setCreateForm({ ...createForm, monedaId: e.target.value })}
             options={[{ value: 1, label: '$ (ARS)' }, { value: 2, label: 'USD' }]} />
-          <Input label="Importe" type="number" step="0.01" value={createForm.importe} onChange={(e) => setCreateForm({ ...createForm, importe: e.target.value })} placeholder="0.00" />
+          <MoneyInput label="Importe" value={createForm.importe} onChange={(val) => setCreateForm({ ...createForm, importe: val })} />
           <Input label="Observacion" value={createForm.observacion} onChange={(e) => setCreateForm({ ...createForm, observacion: e.target.value })} placeholder="Observacion (opcional)" />
           <div className="flex gap-3 justify-end pt-2">
             <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancelar</Button>
@@ -170,7 +171,7 @@ export default function Facturas() {
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
               <p className="text-sm text-gray-600 dark:text-gray-300">Saldo pendiente: <span className="font-semibold">{formatMoney(Number(selectedFactura.FacturaSaldo || selectedFactura.saldo), MONEDA_SYMBOLS[selectedFactura.MonedaId || selectedFactura.monedaId] || '$')}</span></p>
             </div>
-            <Input label="Monto a cobrar" type="number" step="0.01" value={cobrarForm.importe} onChange={(e) => setCobrarForm({ ...cobrarForm, importe: e.target.value })} />
+            <MoneyInput label="Monto a cobrar" value={cobrarForm.importe} onChange={(val) => setCobrarForm({ ...cobrarForm, importe: val })} />
             <Select label="Caja" value={cobrarForm.cajaId} onChange={(e) => setCobrarForm({ ...cobrarForm, cajaId: e.target.value })}
               options={cajas.map((c: any) => ({ value: c.id || c.CajaId, label: c.nombre || c.CajaNombre }))} placeholder="Seleccionar caja" />
             <div className="flex gap-3 justify-end pt-2">

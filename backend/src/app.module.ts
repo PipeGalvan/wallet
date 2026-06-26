@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtModule } from '@nestjs/jwt';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './modules/auth/auth.module';
 import { CajasModule } from './modules/cajas/cajas.module';
 import { IngresosModule } from './modules/ingresos/ingresos.module';
@@ -18,6 +19,7 @@ import { CatalogosModule } from './modules/catalogos/catalogos.module';
 import { ReportesModule } from './modules/reportes/reportes.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { MovimientosRecurrentesModule } from './modules/movimientos-recurrentes/movimientos-recurrentes.module';
+import { PushModule } from './modules/push/push.module';
 import * as entities from './entities';
 
 @Module({
@@ -40,6 +42,7 @@ import * as entities from './entities';
       secret: process.env.JWT_SECRET || 'default-secret',
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '30d' },
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     CajasModule,
     IngresosModule,
@@ -55,6 +58,7 @@ import * as entities from './entities';
     ReportesModule,
     AdminModule,
     MovimientosRecurrentesModule,
+    PushModule,
   ],
 })
 export class AppModule {}

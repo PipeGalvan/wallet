@@ -9,8 +9,9 @@ import Input from '../components/ui/Input';
 import Spinner from '../components/ui/Spinner';
 import { Plus, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
+import NotificacionesPanel from '../components/settings/NotificacionesPanel';
 
-type Tab = 'tipos-ingreso' | 'tipos-egreso' | 'cajas' | 'clientes';
+type Tab = 'tipos-ingreso' | 'tipos-egreso' | 'cajas' | 'clientes' | 'notificaciones';
 
 export default function Configuracion() {
   const [tab, setTab] = useState<Tab>('tipos-ingreso');
@@ -105,6 +106,7 @@ export default function Configuracion() {
     { key: 'tipos-egreso', label: 'Tipos de Egreso' },
     { key: 'cajas', label: 'Cajas' },
     { key: 'clientes', label: 'Clientes' },
+    { key: 'notificaciones', label: 'Notificaciones' },
   ];
 
   const currentItems = tab === 'tipos-ingreso' ? tiposIngreso : tab === 'tipos-egreso' ? tiposEgreso : tab === 'cajas' ? cajas : clientes;
@@ -124,9 +126,11 @@ export default function Configuracion() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Configuracion</h1>
-        <Button onClick={openCreate}>
-          <Plus size={16} className="mr-1" /> Nuevo
-        </Button>
+        {tab !== 'notificaciones' && (
+          <Button onClick={openCreate}>
+            <Plus size={16} className="mr-1" /> Nuevo
+          </Button>
+        )}
       </div>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
@@ -143,6 +147,11 @@ export default function Configuracion() {
         ))}
       </div>
 
+      {tab === 'notificaciones' ? (
+        <Card>
+          <NotificacionesPanel />
+        </Card>
+      ) : (
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -191,6 +200,7 @@ export default function Configuracion() {
           </table>
         </div>
       </Card>
+      )}
 
       <Modal open={showModal} onClose={() => setShowModal(false)} title={editId ? 'Editar' : 'Nuevo'}>
         <div className="space-y-4">

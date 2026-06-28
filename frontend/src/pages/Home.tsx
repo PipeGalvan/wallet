@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { reportesApi } from '../api/reportes';
 import Card from '../components/ui/Card';
+import InstallPrompt from '../components/InstallPrompt';
 import { formatMoney } from '../utils/format';
 import { MONEDA_SYMBOLS } from '../utils/constants';
 import { useAuthStore } from '../store/authStore';
@@ -214,6 +215,7 @@ export default function Home() {
 
   return (
     <div>
+      <InstallPrompt />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Dashboard</h1>
       </div>

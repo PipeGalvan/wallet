@@ -14,4 +14,7 @@ export const pushApi = {
   unsubscribe: (endpoint: string) =>
     api.delete('/push/subscribe', { data: { endpoint } }),
   getVapidPublicKey: () => api.get('/push/vapid-public'),
+  // Admin-only: manually fire the daily reminders cron. Returns
+  // { sent, pruned, totalSubscriptions }.
+  triggerReminders: () => api.post('/push/admin/trigger-reminders'),
 };

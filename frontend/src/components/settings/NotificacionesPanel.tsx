@@ -1,6 +1,10 @@
-import { Bell, BellOff, BellRing, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, BellOff, BellRing, AlertCircle, Send } from 'lucide-react';
+import toast from 'react-hot-toast';
 import Button from '../ui/Button';
 import { usePushSubscription } from '../../hooks/usePushSubscription';
+import { pushApi } from '../../api/push';
+import { useAuthStore } from '../../store/authStore';
 
 type Status = 'unknown' | 'allowed' | 'blocked' | 'active';
 
@@ -27,9 +31,31 @@ const STATUS_META: Record<
 export default function NotificacionesPanel() {
   const { permission, subscribed, loading, subscribe, unsubscribe } =
     usePushSubscription();
+  const isAdmin = useAuthStore((s) => s.user?.isAdmin === true);
+  const [testing, setTesting] = useState(false);
 
   const status = resolveStatus(permission, subscribed);
   const { label, icon: Icon, tone } = STATUS_META[status];
+
+  // Admin-only: manually trigger the daily reminders cron for testing.
+  const handleTestTrigger = async () => {
+    setTesting(true);
+    try {
+      const { data } = await pushApi.triggerReminders();
+      // Response envelope: { success, data: { sent, pruned, totalSubscriptions } }
+      const result = data?.data ?? data;
+      toast.success(
+        `Procesado: ${result.sent} enviada(s), ${result.pruned} podada(s), ${result.totalSubscriptions} suscripción(es)`,
+      );
+    } catch (err: any) {
+      toast.error(
+        err.response?.data?.error?.message ||
+          'Error al disparar recordatorios',
+      );
+    } finally {
+      setTesting(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -80,6 +106,29 @@ export default function NotificacionesPanel() {
           </Button>
         )}
       </div>
+
+      {isAdmin && (
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 space-y-3">
+          <div>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+              Herramientas admin
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Disparar manualmente el cron de recordatorios (no espera a las
+              09:00). Útil para probar que el flujo push funciona en este
+              dispositivo.
+            </p>
+          </div>
+          <Button
+            onClick={handleTestTrigger}
+            loading={testing}
+            variant="secondary"
+          >
+            <Send size={16} className="mr-1" />
+            Probar notificación
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

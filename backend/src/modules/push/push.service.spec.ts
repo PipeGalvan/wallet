@@ -270,6 +270,39 @@ describe('PushService', () => {
 
       expect(mockRepo.delete).toHaveBeenCalledWith(staleSub.id);
     });
+
+    // ============================================
+    // sendDailyReminders — return shape (for admin trigger endpoint)
+    // ============================================
+    it('returns zero counts when there are no subscriptions at all', async () => {
+      mockRepo.find.mockResolvedValue([]);
+
+      const result = await service.sendDailyReminders();
+
+      expect(result).toEqual({ sent: 0, pruned: 0, totalSubscriptions: 0 });
+    });
+
+    it('returns sent count when pushes succeed', async () => {
+      mockRepo.find.mockResolvedValue([makeSub(1)]);
+      mockMrService.getPendientes.mockResolvedValue([{ id: 1 }]);
+
+      const result = await service.sendDailyReminders();
+
+      expect(result).toEqual({ sent: 1, pruned: 0, totalSubscriptions: 1 });
+    });
+
+    it('returns pruned count when a subscription is stale (410)', async () => {
+      const staleSub = makeSub(1);
+      mockRepo.find.mockResolvedValue([staleSub]);
+      mockMrService.getPendientes.mockResolvedValue([{ id: 1 }]);
+      sendNotificationMock.mockRejectedValueOnce(
+        Object.assign(new Error('gone'), { statusCode: 410 }),
+      );
+
+      const result = await service.sendDailyReminders();
+
+      expect(result).toEqual({ sent: 0, pruned: 1, totalSubscriptions: 1 });
+    });
   });
 
   // ============================================

@@ -1,11 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ForbiddenException } from '@nestjs/common';
 import { PushController } from './push.controller';
 import { PushService } from './push.service';
 import { SubscribeDto } from './dto/subscribe.dto';
 
 describe('PushController', () => {
   let controller: PushController;
-  let pushService: { subscribe: jest.Mock; unsubscribe: jest.Mock };
+  let pushService: {
+    subscribe: jest.Mock;
+    unsubscribe: jest.Mock;
+    sendDailyReminders: jest.Mock;
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -13,6 +18,11 @@ describe('PushController', () => {
     pushService = {
       subscribe: jest.fn().mockResolvedValue(undefined),
       unsubscribe: jest.fn().mockResolvedValue(undefined),
+      sendDailyReminders: jest.fn().mockResolvedValue({
+        sent: 0,
+        pruned: 0,
+        totalSubscriptions: 0,
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -103,6 +113,39 @@ describe('PushController', () => {
       process.env.VAPID_PUBLIC_KEY = 'DIFFERENT_KEY_XYZ';
 
       expect(controller.vapidPublic().publicKey).toBe('DIFFERENT_KEY_XYZ');
+    });
+  });
+
+  // ============================================
+  // POST /admin/trigger-reminders (ADMIN ONLY)
+  // ============================================
+  describe('triggerReminders (admin only)', () => {
+    it('throws ForbiddenException when user is not admin', async () => {
+      await expect(
+        controller.triggerReminders({ user: { isAdmin: false } } as any),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(pushService.sendDailyReminders).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when user has no isAdmin flag at all', async () => {
+      await expect(
+        controller.triggerReminders({ user: {} } as any),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(pushService.sendDailyReminders).not.toHaveBeenCalled();
+    });
+
+    it('delegates to service.sendDailyReminders and returns the result when user IS admin', async () => {
+      const expectedResult = { sent: 2, pruned: 1, totalSubscriptions: 3 };
+      pushService.sendDailyReminders.mockResolvedValueOnce(expectedResult);
+
+      const result = await controller.triggerReminders({
+        user: { isAdmin: true },
+      } as any);
+
+      expect(pushService.sendDailyReminders).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(expectedResult);
     });
   });
 });

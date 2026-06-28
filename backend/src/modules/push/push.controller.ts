@@ -5,6 +5,8 @@ import {
   Delete,
   Body,
   UseGuards,
+  Req,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PushService } from './push.service';
 import { SubscribeDto } from './dto/subscribe.dto';
@@ -46,5 +48,25 @@ export class PushController {
   @Get('vapid-public')
   vapidPublic() {
     return { publicKey: process.env.VAPID_PUBLIC_KEY };
+  }
+
+  /**
+   * Admin-only manual trigger of the daily reminders cron. Useful for
+   * integration testing in prod without waiting for 09:00, and as an
+   * operational "send test notification" tool.
+   *
+   * Guarded by JwtAuthGuard (valid JWT required). Admin authorization is
+   * enforced here via req.user.isAdmin (populated by JwtStrategy from the
+   * JWT payload). No AdminGuard exists in the project yet.
+   */
+  @Post('admin/trigger-reminders')
+  @UseGuards(JwtAuthGuard)
+  async triggerReminders(
+    @Req() req: { user?: { isAdmin?: boolean } },
+  ): Promise<{ sent: number; pruned: number; totalSubscriptions: number }> {
+    if (!req.user?.isAdmin) {
+      throw new ForbiddenException('Admin access required');
+    }
+    return this.pushService.sendDailyReminders();
   }
 }

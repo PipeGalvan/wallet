@@ -86,11 +86,19 @@ export class PushService implements OnModuleInit {
    * receive their push.
    */
   @Cron('0 9 * * *')
-  async sendDailyReminders(): Promise<void> {
+  async sendDailyReminders(): Promise<{
+    sent: number;
+    pruned: number;
+    totalSubscriptions: number;
+  }> {
     const subscriptions = await this.repo.find();
-    if (subscriptions.length === 0) return;
+    if (subscriptions.length === 0) {
+      return { sent: 0, pruned: 0, totalSubscriptions: 0 };
+    }
 
     const ownerIds = [...new Set(subscriptions.map((s) => s.propietarioId))];
+    let sent = 0;
+    let pruned = 0;
 
     for (const ownerId of ownerIds) {
       const pendientes = await this.mrService.getPendientes(ownerId);
@@ -102,9 +110,11 @@ export class PushService implements OnModuleInit {
       for (const sub of ownerSubs) {
         try {
           await this.sendToSubscription(sub, payload);
+          sent++;
         } catch (error) {
           if (this.isStale(error)) {
             await this.repo.delete(sub.id);
+            pruned++;
           } else {
             this.logger.error(
               `Failed to send push to subscription ${sub.id}: ${error.message}`,
@@ -113,6 +123,8 @@ export class PushService implements OnModuleInit {
         }
       }
     }
+
+    return { sent, pruned, totalSubscriptions: subscriptions.length };
   }
 
   /** Maps the stored entity to the web-push subscription shape and sends. */

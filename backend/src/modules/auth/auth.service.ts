@@ -90,14 +90,24 @@ export class AuthService {
       throw new UnauthorizedException('No tiene acceso a esta cuenta');
     }
 
+    // Load the user to preserve isAdmin and username in the re-signed JWT.
+    // Previously this dropped both fields, leaving req.user.isAdmin undefined
+    // for every request after account selection (broke any admin-guarded
+    // endpoint, including the push admin trigger).
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+
     const propietario = await this.propRepo.findOne({
       where: { id: dto.propietarioId },
     });
 
     const payload: JwtPayload = {
       sub: userId,
-      username: '',
+      username: user.username,
       propietarioId: dto.propietarioId,
+      isAdmin: user.isAdmin,
     };
 
     return {

@@ -9,34 +9,38 @@ import {
 /**
  * A Web Push subscription, keyed by propietarioId (tenant).
  *
- * UNIQUE(propietario_id, endpoint) enforces idempotent re-subscription: a
+ * UNIQUE(PropietarioId, Endpoint) enforces idempotent re-subscription: a
  * second subscribe with the same endpoint updates the keys instead of
  * duplicating the row. One propietario may own multiple subscriptions
  * (one per device).
+ *
+ * Column names follow the project's PascalCase convention (legacy GeneXus
+ * schema: PropietarioId, EgresoId, etc.). PropietarioId is typed smallint
+ * to match the referenced PK in `propietario`.
  */
 @Entity('push_subscription')
 export class PushSubscription {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'PushSubscriptionId' })
   id: number;
 
-  @Column({ name: 'propietario_id' })
+  @Column({ name: 'PropietarioId', type: 'smallint' })
   propietarioId: number;
 
-  @Column({ length: 500 })
+  @Column({ name: 'Endpoint', length: 500 })
   endpoint: string;
 
-  @Column({ name: 'keys_p256dh', length: 255 })
+  @Column({ name: 'KeysP256dh', length: 255 })
   keysP256dh: string;
 
-  @Column({ name: 'keys_auth', length: 255 })
+  @Column({ name: 'KeysAuth', length: 255 })
   keysAuth: string;
 
-  @Column({ name: 'expiration_time', type: 'bigint', nullable: true })
+  @Column({ name: 'ExpirationTime', type: 'bigint', nullable: true })
   expirationTime: number | null;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'CreatedAt' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: 'UpdatedAt' })
   updatedAt: Date;
 }

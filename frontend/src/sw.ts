@@ -13,6 +13,26 @@ declare const self: ServiceWorkerGlobalScope;
 // Injected by vite-plugin-pwa at build time (the precache manifest).
 precacheAndRoute(self.__WB_MANIFEST);
 
+// Incoming push from FCM/Mozilla/Apple. Parse the backend payload and show
+// the notification. Without this handler, pushes arrive but nothing displays.
+self.addEventListener('push', (event) => {
+  let payload: { title?: string; body?: string; url?: string } = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    // Fallback if the payload is not valid JSON.
+    payload = { body: event.data?.text() ?? '' };
+  }
+
+  const title = payload.title ?? 'Wallet';
+  const options: NotificationOptions = {
+    body: payload.body ?? '',
+    data: { url: payload.url ?? '/recurrentes' },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 

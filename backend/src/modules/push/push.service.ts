@@ -85,7 +85,10 @@ export class PushService implements OnModuleInit {
    * Stale subscriptions (410 Gone / 404) are pruned so the others still
    * receive their push.
    */
-  @Cron('0 9 * * *')
+  // Cron runs in America/Argentina/Buenos_Aires regardless of the server's
+  // timezone (Dokploy containers are UTC). Without this, 09:00 in the cron
+  // expression would be interpreted as 09:00 UTC = 06:00 ART.
+  @Cron('0 9 * * *', { timeZone: 'America/Argentina/Buenos_Aires' })
   async sendDailyReminders(): Promise<{
     sent: number;
     pruned: number;
